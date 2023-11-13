@@ -9,7 +9,13 @@ scrape_title <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  
+  job_title <- page %>% html_nodes('.im1gct2 .z1s6m00') %>% html_text()
+  job_title <- gsub("/.*", "", job_title)
+  job_title <- gsub("/.*", "", job_title)
+  job_title <- gsub("\\(.*\\)", "", job_title)
+  job_title <- gsub(" -.*", "", job_title)
+  job_title <- gsub(" –.*", "", job_title)
+  job_title <- gsub(" /.*", "", job_title)
 }
 
 
@@ -18,7 +24,10 @@ scrape_location <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  
+  location <- page %>% html_nodes('._1hbhsw6ga._1hbhsw6fy') %>% html_node('.y44q7i3 .rqoqz4') %>% html_text()
+  location <- gsub("/.*", "", location)
+  location <- gsub(" -.*", "", location)
+  location <- as.factor(location)
 }
 
 
@@ -176,6 +185,8 @@ scrape_edu_level <- function(url) {
 ## Main loop to scrape 4 pages of data
 all_salaries <- NULL
 all_education_levels <- NULL
+job_title <- NULL
+location <- NULL
 url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 3 - 5 minutes)")
@@ -184,12 +195,15 @@ for (page_number in 1:4) {
   page_url <- paste0(url, "?pg=", page_number)
   all_salaries <- c(all_salaries, scrape_salary(page_url))
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  job_title <- c(job_title, scrape_title(page_url))
+  location <- c(location, scrape_location(page_url))
 }
 
 # Print the results
 print(length(all_salaries))
 print(length(all_education_levels))
-
+print(length(job_title))
+print(length(location))
 
 # Forming Data frame
 
