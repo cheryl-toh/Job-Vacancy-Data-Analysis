@@ -105,7 +105,27 @@ scrape_co_size <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+
+  for (job_link in job_links) 
   
+
+  article_url <- paste0("https://www.jobstreet.com.my", job_link)  
+  
+
+  Sys.sleep(1)
+  
+
+  article_page <- read_html(article_url)
+  
+
+  company_size <- article_page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
+  
+  all_company_size <- c((company_size))
+  
+  rm(article_page)
+  
+  print(all_company_size)
 }
 
 
@@ -114,6 +134,8 @@ scrape_job_type <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  job_type <- page %>% html_nodes('._1hbhsw67y~ ._1hbhsw652 ._1hbhsw6h') %>% html_text()
+  print(job_type)
   
 }
 
