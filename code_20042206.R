@@ -1,7 +1,7 @@
 # import statements
 library('rvest')
 library(stringr)
-
+#test2
 # scrapping data
 
 ## job title (Gladys)
