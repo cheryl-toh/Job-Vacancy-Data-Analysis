@@ -124,6 +124,19 @@ scrape_working_hour <- function(url) {
   # Read page URL
   page <- read_html(url)
   
+  #TESTING average processing time  
+  website <- read_html('https://www.jobstreet.com.my/jobs/in-Malaysia')
+
+  APT_data_html <- html_nodes(website,'._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1')
+
+  APT_data <- html_text(APT_data_html)
+
+  print(head(APT_data))
+
+  #git part
+  APT <- page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
+  APT <- gsub("days", "", ATP)
+  APT <- as.numeric(ATP)
 }
 
 
@@ -132,7 +145,9 @@ scrape_exp_level <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-
+  Exp_level <- page %>% html_nodes('._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(3) .y44q7i1') %>% html_text()
+  Exp_level <- gsub("years", "", Exp_level)
+  Exp_level <- as.numeric(Exp_level)
 }
 
 
