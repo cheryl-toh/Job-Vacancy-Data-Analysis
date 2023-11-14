@@ -135,8 +135,10 @@ scrape_working_hour <- function(url) {
 
   #git part
   APT <- page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
-  APT <- gsub("days", "", ATP)
-  APT <- as.numeric(ATP)
+  APT <- gsub("days", "", APT)
+  APT <- as.numeric(APT)
+  
+  return(APT)
 }
 
 
@@ -148,6 +150,8 @@ scrape_exp_level <- function(url) {
   Exp_level <- page %>% html_nodes('._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(3) .y44q7i1') %>% html_text()
   Exp_level <- gsub("years", "", Exp_level)
   Exp_level <- as.numeric(Exp_level)
+  
+  return(Exp_level)
 }
 
 
@@ -202,23 +206,30 @@ all_salaries <- NULL
 all_education_levels <- NULL
 job_title <- NULL
 location <- NULL
+APT <- NULL
+EXP_lvl <- NULL
+
 url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 3 - 5 minutes)")
 
 for (page_number in 1:4) {
   page_url <- paste0(url, "?pg=", page_number)
-  all_salaries <- c(all_salaries, scrape_salary(page_url))
-  all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  job_title <- c(job_title, scrape_title(page_url))
-  location <- c(location, scrape_location(page_url))
+  #all_salaries <- c(all_salaries, scrape_salary(page_url))
+  #all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  #job_title <- c(job_title, scrape_title(page_url))
+  #location <- c(location, scrape_location(page_url))
+  APT <- c(APT, scrape_working_hour(page_url))
+  EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
 }
 
 # Print the results
-print(length(all_salaries))
-print(length(all_education_levels))
-print(length(job_title))
-print(length(location))
+#print(length(all_salaries))
+#print(length(all_education_levels))
+#print(length(job_title))
+#print(length(location))
+print(length(APT))
+print(length(EXP_lvl))
 
 # Forming Data frame
 
