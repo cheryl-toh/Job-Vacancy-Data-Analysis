@@ -1,7 +1,7 @@
 # import statements
 library('rvest')
 library(stringr)
-
+#test2
 # scrapping data
 
 ## job title (Gladys)
@@ -118,21 +118,90 @@ scrape_job_type <- function(url) {
 }
 
 
-## working hour (Marcus)
-scrape_working_hour <- function(url) {
+## average processing time (Marcus)
+scrape_ATP_levels <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   
+  # Define empty list for all APT levels
+  all_APT_levels <- list()
+  
+  # Select all job links
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  
+  # Loop through each job link
+  for (job_link in job_links) {
+    
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
+    
+    # Replace ".your-class" with the actual class containing APT information
+    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1")
+    
+    # Extract text from the APT element
+    extracted_APT <- html_text(APT_element)
+    
+    
+    APT_levels <- unlist(extracted_APT)
+    
+    # Append the list of APT levels to the parent list
+    all_APT_levels <- c(all_APT_levels, list(APT_levels))
+    
+    # Explicitly close the connection
+    rm(article_page)
+  }
+  
+  return(all_APT_levels)
 }
-
 
 ## experience level (Marcus)
 scrape_exp_level <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-
+  
+  # Define empty list for all experience levels
+  all_exp_levels <- list()
+  
+  # Select all job links
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  
+  # Loop through each job link
+  for (job_link in job_links) {
+    
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
+    
+    # Replace ".your-class" with the actual class containing experience information
+    exp_element <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(3) .y44q7i1")
+    
+    # Extract text from the experience element
+    extracted_exp <- html_text(exp_element)
+    
+    
+    exp_levels <- unlist(extracted_exp)
+    
+    # Append the list of education levels to the parent list
+    all_exp_levels <- c(all_exp_levels, list(exp_levels))
+    
+    # Explicitly close the connection
+    rm(article_page)
+  }
+  
+  return(all_exp_levels)
 }
 
 
@@ -187,9 +256,12 @@ all_salaries <- NULL
 all_education_levels <- NULL
 job_title <- NULL
 location <- NULL
+APT <- NULL
+EXP_lvl <- NULL
+
 url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
-print("Scrapping webpages... (Might take up to 3 - 5 minutes)")
+print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
 for (page_number in 1:4) {
   page_url <- paste0(url, "?pg=", page_number)
@@ -197,6 +269,8 @@ for (page_number in 1:4) {
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
   job_title <- c(job_title, scrape_title(page_url))
   location <- c(location, scrape_location(page_url))
+  APT <- c(APT, scrape_ATP_levels(page_url))
+  EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
 }
 
 # Print the results
@@ -204,6 +278,8 @@ print(length(all_salaries))
 print(length(all_education_levels))
 print(length(job_title))
 print(length(location))
+print(length(APT))
+print(length(EXP_lvl))
 
 # Forming Data frame
 
