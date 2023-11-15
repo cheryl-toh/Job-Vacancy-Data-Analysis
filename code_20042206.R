@@ -52,8 +52,9 @@ process_date <- function(raw_date) {
   } else if (grepl("Posted on \\d{1,2}-[a-zA-Z]{3}-\\d{2}", raw_date)) {
     # If the format is "Posted on DD-MMM-YY", extract the date
     extracted_date <- str_extract(raw_date, "\\d{1,2}-[a-zA-Z]{3}-\\d{2}")
+    date <- as.Date(extracted_date, format = "%d-%b-%y")
     # Convert the extracted date to a Date object (assuming 20th century)
-    return(as.Date(extracted_date, format = "%d-%b-%y")) 
+    return(format(date, format = "%Y-%m-%d")) 
   } else {
     # If the format is not recognized, return the original string
     return(raw_date)
@@ -128,7 +129,7 @@ scrape_salary <- function(url) {
     # Check if salary information is present
     if (length(html_text(html_nodes(job_elements[i], '.y44q7ih+ .y44q7ih'))) == 0){
       
-      extracted_salary[i] <- NA
+      extracted_salary[i] <- "NA"
       
     }else {
       
@@ -182,7 +183,11 @@ scrape_co_size <- function(url) {
     
     company_size <- article_page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
     
-    all_company_size <- c(all_company_size, company_size)
+    if (!grepl("Employees", company_size)) {
+      all_company_size <- c(all_company_size, "NA")
+    } else {
+      all_company_size <- c(all_company_size, company_size)
+    }
     
     rm(article_page)
     
@@ -229,10 +234,15 @@ scrape_ATP_levels <- function(url) {
     article_page <- read_html(article_url)
     
     # Replace ".your-class" with the actual class containing APT information
-    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1")
+    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(3) .y44q7i1")
     
-    # Extract text from the APT element
-    extracted_APT <- html_text(APT_element)
+    if (!grepl("days", APT_element)) {
+      extracted_APT <- "NA"
+    }else {
+      # Extract text from the APT element
+      extracted_APT <- html_text(APT_element)
+    }
+    
     
     
     APT_levels <- unlist(extracted_APT)
@@ -379,8 +389,47 @@ print(length(company_name))
 print(length(job_type))
 print(length(company_size))
 
-# Forming Data frame
+length_of_data <- 30
 
+# Forming Data frame
+data <- data.frame(
+  Job_Title = rep("Not specified", 30),
+  Location = rep("Not specified", length_of_data),
+  Company_Name = rep("Not specified", length_of_data),
+  Salary = rep("Not specified", 30),
+  Job_Type = rep("Not specified", length_of_data),
+  Company_Size = rep("Not specified", length_of_data),
+  Education_Level = rep("Not specified", length_of_data),
+  Experience_Level = rep("Not specified", length_of_data),
+  Date_Posted = rep("Not specified", length_of_data),
+  APT = rep("Not specified", length_of_data)
+)
+
+# Populate the data frame with actual values
+data$Salary <- all_salaries
+data$Education_Level <- all_education_levels
+data$Job_Title <- job_title
+data$Location <- location
+data$APT <- APT
+data$Experience_Level <- EXP_lvl
+data$Date_Posted <- date
+data$Company_Name <- company_name
+data$Job_Type <- job_type
+data$Company_Size <- company_size
+
+# Add an index column
+data$Index <- seq_along(all_salaries)
+
+# Reorder columns to have the Index column first
+data <- data[, c("Index", names(data)[-ncol(data)])]
+
+print(head(data))
+
+# Convert list-type columns to characters
+data[] <- lapply(data, function(x) if (is.list(x)) as.character(x) else x)
+
+# Export data frame to CSV
+write.csv(data, "job_data.csv", row.names = FALSE)
 
 
 # Data Analysis
