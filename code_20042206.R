@@ -36,16 +36,35 @@ scrape_co_name <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  company_names <- page %>%
+    html_nodes(".company_name") %>%
+    html_text()
   
+  print(company_names)
 }
-
 
 ## date posted (Gabriel)
 scrape_date <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  date <- page %>%
+    html_nodes(".job_date") %>% 
+    html_text()
   
+  if (grepl("Today", date)) {
+    return(Sys.Date())
+  
+    } else if (grepl("Yesterday", date_str)) {
+    return(Sys.Date() - 1)
+  
+      } else if (grepl("\\d+ day[s]? ago", date_str)) {
+    days_ago <- as.numeric(str_extract(date_str, "\\d+"))
+    return(Sys.Date() - days_ago)
+  
+    } else {
+    return(date)
+    }
 }
 
 
