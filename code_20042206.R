@@ -437,19 +437,17 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 
 ## Time Trend (Gabriel)
 
-## Company size by frequency (Bryan)
-
-## Company size vs job post available duration (Gabriel)
+## Company size by frequency (Gabriel)
 
 ## Experience level by frequency (Bryan)
 
 ## Education level by frequency (Bryan)
 
-## Contract type vs average working hour (Marcus)
+## job type vs apt (Marcus)
 
-## Contract type by frequency (Cheryl)
+## Job type by frequency (Cheryl)
 
-## Salary by job category (Cheryl)
+## Salary by job type (Cheryl)
 
 ## Salary vs Experience level (Marcus)
 
