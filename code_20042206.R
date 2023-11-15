@@ -37,34 +37,76 @@ scrape_co_name <- function(url) {
   # Read page URL
   page <- read_html(url)
   company_names <- page %>%
-    html_nodes(".company_name") %>%
+    html_nodes(".y44q7i1 .rqoqz4") %>%
     html_text()
   
-  print(company_names)
+  return(company_names)
 }
 
 ## date posted (Gabriel)
+# Helper function to process date information
+process_date <- function(raw_date) {
+  if (grepl("hour[s]? ago", raw_date)) {
+    # If hours ago, return today's date
+    return(format(Sys.Date(), format = "%Y-%m-%d"))
+  } else if (grepl("Posted on \\d{1,2}-[a-zA-Z]{3}-\\d{2}", raw_date)) {
+    # If the format is "Posted on DD-MMM-YY", extract the date
+    extracted_date <- str_extract(raw_date, "\\d{1,2}-[a-zA-Z]{3}-\\d{2}")
+    # Convert the extracted date to a Date object (assuming 20th century)
+    return(as.Date(extracted_date, format = "%d-%b-%y")) 
+  } else {
+    # If the format is not recognized, return the original string
+    return(raw_date)
+  }
+}
+
 scrape_date <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  date <- page %>%
-    html_nodes(".job_date") %>% 
-    html_text()
   
-  if (grepl("Today", date)) {
-    return(Sys.Date())
+  # Define empty list for all education levels
+  all_dates <- list()
   
-    } else if (grepl("Yesterday", date_str)) {
-    return(Sys.Date() - 1)
+  # Select all job links
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
   
-      } else if (grepl("\\d+ day[s]? ago", date_str)) {
-    days_ago <- as.numeric(str_extract(date_str, "\\d+"))
-    return(Sys.Date() - days_ago)
-  
-    } else {
-    return(date)
+  # Loop through each job link
+  for (job_link in job_links) {
+    
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
+    
+    # Check for the first class pattern
+    date_element <- article_page %>% html_node("._1hbhsw66i~ ._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
+    
+    # If the first class pattern is not found, try the second class pattern
+    if (length(date_element) == 0) {
+      date_element <- article_page %>% html_node("._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
     }
+    
+    extracted_date <- html_text(date_element)
+  
+    
+    # Process the date information
+    processed_date <- process_date(extracted_date)
+    
+    # Append the processed date to the list
+    all_dates <- c(all_dates, processed_date)
+    
+    # Explicitly close the connection
+    rm(article_page)
+  }
+  
+  # Return the extracted education levels
+  return(all_dates)
+  
 }
 
 
@@ -275,6 +317,8 @@ all_salaries <- NULL
 all_education_levels <- NULL
 job_title <- NULL
 location <- NULL
+date <- NULL
+company_name <- NULL
 APT <- NULL
 EXP_lvl <- NULL
 
@@ -282,7 +326,7 @@ url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
-for (page_number in 1:4) {
+for (page_number in 1) {
   page_url <- paste0(url, "?pg=", page_number)
   all_salaries <- c(all_salaries, scrape_salary(page_url))
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
@@ -290,6 +334,8 @@ for (page_number in 1:4) {
   location <- c(location, scrape_location(page_url))
   APT <- c(APT, scrape_ATP_levels(page_url))
   EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
+  date <- c(date, scrape_date(page_url))
+  company_name <- c(company_name, scrape_co_name(page_url))
 }
 
 # Print the results
@@ -299,6 +345,8 @@ print(length(job_title))
 print(length(location))
 print(length(APT))
 print(length(EXP_lvl))
+print(length(date))
+print(length(company_name))
 
 # Forming Data frame
 
