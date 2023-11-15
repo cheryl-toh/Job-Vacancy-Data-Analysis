@@ -1,7 +1,7 @@
 # import statements
 library('rvest')
 library(stringr)
-
+#test2
 # scrapping data
 
 ## job title (Gladys)
@@ -311,7 +311,6 @@ print(length(APT))
 print(length(EXP_lvl))
 print(length(job_type))
 print(length(company_size))
-
 
 # Forming Data frame
 
