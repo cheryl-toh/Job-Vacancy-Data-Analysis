@@ -164,9 +164,30 @@ scrape_salary <- function(url) {
 ## company size (Bryan)
 scrape_co_size <- function(url) {
   
+  all_company_size <- NULL
+  
   # Read page URL
   page <- read_html(url)
-  
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+
+  for (job_link in job_links) {
+    article_url <- paste0("https://www.jobstreet.com.my", job_link)  
+    
+    
+    Sys.sleep(1)
+    
+    
+    article_page <- read_html(article_url)
+    
+    
+    company_size <- article_page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
+    
+    all_company_size <- c(all_company_size, company_size)
+    
+    rm(article_page)
+    
+  }
+  return(all_company_size)
 }
 
 
@@ -175,6 +196,10 @@ scrape_job_type <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  job_type <- page %>% html_nodes('._1hbhsw67y~ ._1hbhsw652 ._1hbhsw6h') %>% html_text()
+  # Explicitly close the connection
+  rm(page)
+  return(job_type)
   
 }
 
@@ -321,6 +346,8 @@ date <- NULL
 company_name <- NULL
 APT <- NULL
 EXP_lvl <- NULL
+company_size <- NULL
+job_type <- NULL
 
 url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
@@ -336,6 +363,8 @@ for (page_number in 1) {
   EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
   date <- c(date, scrape_date(page_url))
   company_name <- c(company_name, scrape_co_name(page_url))
+  job_type <- c(job_type, scrape_job_type(page_url))
+  company_size <- c(company_size, scrape_co_size(page_url))
 }
 
 # Print the results
@@ -347,6 +376,8 @@ print(length(APT))
 print(length(EXP_lvl))
 print(length(date))
 print(length(company_name))
+print(length(job_type))
+print(length(company_size))
 
 # Forming Data frame
 
