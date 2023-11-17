@@ -1,7 +1,8 @@
 # import statements
 library('rvest')
 library(stringr)
-#test2
+library(ggplot2)
+
 # scrapping data
 
 ## job title (Gladys)
@@ -39,7 +40,7 @@ scrape_co_name <- function(url) {
   company_names <- page %>%
     html_nodes(".y44q7i1 .rqoqz4") %>%
     html_text()
-  
+  rm(page)
   return(company_names)
 }
 
@@ -52,8 +53,9 @@ process_date <- function(raw_date) {
   } else if (grepl("Posted on \\d{1,2}-[a-zA-Z]{3}-\\d{2}", raw_date)) {
     # If the format is "Posted on DD-MMM-YY", extract the date
     extracted_date <- str_extract(raw_date, "\\d{1,2}-[a-zA-Z]{3}-\\d{2}")
+    date <- as.Date(extracted_date, format = "%d-%b-%y")
     # Convert the extracted date to a Date object (assuming 20th century)
-    return(as.Date(extracted_date, format = "%d-%b-%y")) 
+    return(format(date, format = "%Y-%m-%d")) 
   } else {
     # If the format is not recognized, return the original string
     return(raw_date)
@@ -109,8 +111,7 @@ scrape_date <- function(url) {
   
 }
 
-
-## salary (Cheryl)
+# salary (Cheryl)
 scrape_salary <- function(url) {
   
   # Read page URL
@@ -124,36 +125,41 @@ scrape_salary <- function(url) {
   
   # Loop through each job element
   for (i in 1:length(job_elements)) {
-   
+    
     # Check if salary information is present
     if (length(html_text(html_nodes(job_elements[i], '.y44q7ih+ .y44q7ih'))) == 0){
       
-      extracted_salary[i] <- NA
+      extracted_salary[i] <- "NA"
       
-    }else {
+    } else {
       
       extracted_salary[i] <- html_text(html_nodes(job_elements[i],'.y44q7ih+ .y44q7ih'))
       
-      if (grepl("monthly", extracted_salary[i], ignore.case = TRUE)) {
+      # Extract numeric values from the salary text
+      lower_bound <- as.numeric(gsub("[^0-9.]+", "", strsplit(extracted_salary[i], " - ")[[1]][1]))
+      upper_bound <- as.numeric(gsub("[^0-9]+", "", strsplit(extracted_salary[i], " - ")[[1]][2]))
+      
+      # Convert the lower bound to a consistent format
+      if (grepl("K", extracted_salary[i])) {
+        lower_bound <- lower_bound * 1000
+      }
+      
+      # Extract the currency
+      currency <- gsub("[0-9,]+", "", extracted_salary[i])
+      
+      # Check if the salary values represent a range
+      if (!is.na(lower_bound) && !is.na(upper_bound)) {
+        average_salary <- mean(c(lower_bound, upper_bound))
+        extracted_salary[i] <- average_salary
+      } else {
         
-        # Extract numeric values from the salary text
-        salary_values <- as.numeric(gsub("[^0-9]+", "", extracted_salary[i]))
+        extracted_salary[i] <- lower_bound
         
-        # Calculate the average for salary ranges
-        if (length(salary_values) == 2) {
-          
-          average_salary <- mean(salary_values)
-          extracted_salary[i] <- paste(average_salary, "monthly")
-          
-        } else {
-          
-          # If there is only one value, use it as the average
-          extracted_salary[i] <- paste(salary_values, "monthly")
-          
-        }
       }
     }
   }
+  
+  rm(page)
   
   # Return the extracted salaries
   return(extracted_salary)
@@ -182,7 +188,11 @@ scrape_co_size <- function(url) {
     
     company_size <- article_page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
     
-    all_company_size <- c(all_company_size, company_size)
+    if (!grepl("Employees", company_size)) {
+      all_company_size <- c(all_company_size, "NA")
+    } else {
+      all_company_size <- c(all_company_size, company_size)
+    }
     
     rm(article_page)
     
@@ -229,11 +239,14 @@ scrape_ATP_levels <- function(url) {
     article_page <- read_html(article_url)
     
     # Replace ".your-class" with the actual class containing APT information
-    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1")
+    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(3) .y44q7i1")
     
-    # Extract text from the APT element
-    extracted_APT <- html_text(APT_element)
-    
+    if (!grepl("days", APT_element)) {
+      extracted_APT <- "NA"
+    }else {
+      # Extract text from the APT element
+      extracted_APT <- html_text(APT_element)
+    }
     
     APT_levels <- unlist(extracted_APT)
     
@@ -307,7 +320,7 @@ scrape_edu_level <- function(url) {
   for (job_link in job_links) {
     
     # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
     
     # Add delay to prevent request limit error
     Sys.sleep(1)
@@ -315,17 +328,25 @@ scrape_edu_level <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    # Replace ".your-class" with the actual class containing education information
-    education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
-    
-    # Extract text from the education element
-    extracted_education <- html_text(education_element)
-    
-    # Split the extracted education text into a list of education levels
-    edu_levels <- unlist(strsplit(extracted_education, ", "))
-    
-    # Append the list of education levels to the parent list
-    all_education_levels <- c(all_education_levels, list(edu_levels))
+    # Check if the element contains the text "Qualification"
+    qualification_check <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(2) .y44q7i3, ._5135gei ._5135gei:nth-child(1) .pmwfa57:nth-child(2) .y44q7i3") %>% html_text()
+
+    if (!grepl("Qualification", qualification_check, ignore.case = TRUE)) {
+      # If "Qualification" is not present, set education level to NA
+      all_education_levels <- c(all_education_levels, list("Not Specified"))
+    } else {
+      # Class containing education information
+      education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
+      
+      # Extract text from the education element
+      extracted_education <- html_text(education_element)
+      
+      # Split the extracted education text into a list of education levels
+      edu_levels <- unlist(strsplit(extracted_education, ", "))
+      
+      # Append the list of education levels to the parent list
+      all_education_levels <- c(all_education_levels, list(edu_levels))
+    }
     
     # Explicitly close the connection
     rm(article_page)
@@ -335,7 +356,6 @@ scrape_edu_level <- function(url) {
   return(all_education_levels)
   
 }
-
 
 ## Main loop to scrape 4 pages of data
 all_salaries <- NULL
@@ -353,7 +373,7 @@ url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
-for (page_number in 1) {
+for (page_number in 1:2) {
   page_url <- paste0(url, "?pg=", page_number)
   all_salaries <- c(all_salaries, scrape_salary(page_url))
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
@@ -367,40 +387,188 @@ for (page_number in 1) {
   company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-# Print the results
-print(length(all_salaries))
-print(length(all_education_levels))
-print(length(job_title))
-print(length(location))
-print(length(APT))
-print(length(EXP_lvl))
-print(length(date))
-print(length(company_name))
-print(length(job_type))
-print(length(company_size))
+length_of_data <- length(all_salaries)
 
 # Forming Data frame
+data <- data.frame(
+  Job_Title = rep("Not specified", length_of_data),
+  Location = rep("Not specified", length_of_data),
+  Company_Name = rep("Not specified", length_of_data),
+  Salary = rep("Not specified", length_of_data),
+  Job_Type = rep("Not specified", length_of_data),
+  Company_Size = rep("Not specified", length_of_data),
+  Education_Level = rep("Not specified", length_of_data),
+  Experience_Level = rep("Not specified", length_of_data),
+  Date_Posted = rep("Not specified", length_of_data),
+  APT = rep("Not specified", length_of_data)
+)
 
+# Populate the data frame with actual values
+data$Salary <- all_salaries
+data$Education_Level <- all_education_levels
+data$Job_Title <- job_title
+data$Location <- location
+data$APT <- APT
+data$Experience_Level <- EXP_lvl
+data$Date_Posted <- date
+data$Company_Name <- company_name
+data$Job_Type <- job_type
+data$Company_Size <- company_size
+
+# Add an index column
+data$Index <- seq_along(all_salaries)
+
+# Reorder columns to have the Index column first
+data <- data[, c("Index", names(data)[-ncol(data)])]
+
+# Convert list-type columns to characters
+data[] <- lapply(data, function(x) if (is.list(x)) as.character(x) else x)
+
+# Export data frame to CSV
+write.csv(data, "job_data.csv", row.names = FALSE)
 
 
 # Data Analysis
 ## Company Distribution (Gladys)
 
+
+
 ## Time Trend (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
 
-## Company size by frequency (Bryan)
+# Plot line graph
+time_trend_plot <- ggplot(job_data, aes(x = Date)) +
+  geom_line(stat = "count", color = "blue") +
+  labs(title = "Job Posting Time Trend",
+       x = "Date",
+       y = "Number of Job Postings") +
+  theme_minimal()
+              
+ggsave("time_trend_line_graph", time_trend_plot, width = 10, height = 6)
 
-## Company size vs job post available duration (Gabriel)
+## Company size by frequency (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
+
+# Plot scatter plot
+company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
+  geom_point(stat = "count", color = "blue") +
+  labs(title = "Company Size Frequency",
+       x = "Company Size",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("Company Size by Frequency", company_size_frequency, width = 10, height = 6)
 
 ## Experience level by frequency (Bryan)
+# Read CSV file
+job_data <- read.csv("job_data.csv")
+
+# Plot histogram for experience level frequency
+experience_plot <- ggplot(job_data, aes(x = Experience_Level)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Experience Level Frequency",
+       x = "Experience Level",
+       y = "Frequency") +
+  theme_minimal()
+
+# Save the plot as a PNG file
+ggsave("experience_level_histogram.png", experience_plot, width = 8, height = 6)
+
+
 
 ## Education level by frequency (Bryan)
+library(tidyr)
 
-## Contract type vs average working hour (Marcus)
+# Read CSV file
+job_data <- read.csv("job_data.csv")
 
-## Contract type by frequency (Cheryl)
+# Remove 'c()' from each entry
+job_data$Education_Level <- gsub("c\\((.*)\\)", "\\1", job_data$Education_Level)
 
-## Salary by job category (Cheryl)
+# Convert each entry to a list of education levels
+job_data$Education_Level <- sapply(strsplit(as.character(job_data$Education_Level), ", "), as.list)
+
+# Create a data frame with each education level as a separate row
+education_data <- data.frame(
+  Education_Level = unlist(job_data$Education_Level),
+  stringsAsFactors = FALSE
+)
+
+# Plot histogram for education level (horizontal)
+education_plot <- ggplot(education_data, aes(y = Education_Level)) +
+  geom_bar(fill = "skyblue", color = "black", stat = "count") +
+  labs(title = "Education Level Distribution",
+       y = "Education Level",
+       x = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.y = element_text(hjust = 0))
+
+# Save the plot as a PNG file
+ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
+
+
+## job type vs apt (Marcus)
+
+
+
+
+## Job type by frequency (Cheryl)
+# Read the CSV file
+job_data <- read.csv("job_data.csv")
+
+# Plot histogram for Job Type by frequency
+plot <- ggplot(job_data, aes(x = Job_Type)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Job Type Distribution", x = "Job Type", y = "Frequency") +
+  theme_minimal()
+
+# Save the plot as a PNG file
+ggsave("job_type_histogram.png", plot, width = 8, height = 6, units = "in", dpi = 300)
+
+
+## Salary by job type (Cheryl)
+# Read CSV file
+job_data <- read.csv("job_data.csv")
+
+# Install and load required library for plotting
+library(ggplot2)
+
+# Replace "Not specified" with NA in Salary column
+job_data$Salary[job_data$Salary == "Not specified"] <- NA
+
+# Convert Salary column to numeric, ignoring non-numeric entries
+job_data$Salary <- as.numeric(gsub("[^0-9.]+", "", job_data$Salary))
+
+# Filter out rows with non-finite salary values
+job_data <- job_data[is.finite(job_data$Salary), ]
+
+# Get unique job types
+unique_job_types <- unique(job_data$Job_Type)
+
+# Create a list to store individual plots
+boxplot_list <- list()
+
+# Create boxplot for salary for each job type
+for (job_type in unique_job_types) {
+  plot_data <- subset(job_data, Job_Type == job_type)
+  
+  boxplot <- ggplot(plot_data, aes(x = Job_Type, y = Salary)) +
+    geom_boxplot() +
+    labs(title = paste("Boxplot of Salary for", job_type),
+         x = "Job Type",
+         y = "Salary (Monthly)") +
+    theme(axis.text.x = element_text(angle = 45, hjust = 1))
+  
+  boxplot_list[[job_type]] <- boxplot
+}
+
+# Save each plot as a PNG file
+for (job_type in unique_job_types) {
+  ggsave(paste0("salary_by_", gsub(" ", "_", tolower(job_type)), ".png"), boxplot_list[[job_type]], width = 8, height = 6, units = "in", dpi = 300)
+}
 
 ## Salary vs Experience level (Marcus)
 
