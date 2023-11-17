@@ -1,7 +1,8 @@
 # import statements
 library('rvest')
 library(stringr)
-#test2
+library(ggplot2)
+
 # scrapping data
 
 ## job title (Gladys)
@@ -110,7 +111,7 @@ scrape_date <- function(url) {
   
 }
 
-
+# salary (Cheryl)
 scrape_salary <- function(url) {
   
   # Read page URL
@@ -319,7 +320,7 @@ scrape_edu_level <- function(url) {
   for (job_link in job_links) {
     
     # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
     
     # Add delay to prevent request limit error
     Sys.sleep(1)
@@ -327,17 +328,25 @@ scrape_edu_level <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    # Replace ".your-class" with the actual class containing education information
-    education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
-    
-    # Extract text from the education element
-    extracted_education <- html_text(education_element)
-    
-    # Split the extracted education text into a list of education levels
-    edu_levels <- unlist(strsplit(extracted_education, ", "))
-    
-    # Append the list of education levels to the parent list
-    all_education_levels <- c(all_education_levels, list(edu_levels))
+    # Check if the element contains the text "Qualification"
+    qualification_check <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(2) .y44q7i3, ._5135gei ._5135gei:nth-child(1) .pmwfa57:nth-child(2) .y44q7i3") %>% html_text()
+
+    if (!grepl("Qualification", qualification_check, ignore.case = TRUE)) {
+      # If "Qualification" is not present, set education level to NA
+      all_education_levels <- c(all_education_levels, list("Not Specified"))
+    } else {
+      # Class containing education information
+      education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
+      
+      # Extract text from the education element
+      extracted_education <- html_text(education_element)
+      
+      # Split the extracted education text into a list of education levels
+      edu_levels <- unlist(strsplit(extracted_education, ", "))
+      
+      # Append the list of education levels to the parent list
+      all_education_levels <- c(all_education_levels, list(edu_levels))
+    }
     
     # Explicitly close the connection
     rm(article_page)
@@ -347,7 +356,6 @@ scrape_edu_level <- function(url) {
   return(all_education_levels)
   
 }
-
 
 ## Main loop to scrape 4 pages of data
 all_salaries <- NULL
@@ -413,8 +421,6 @@ data$Index <- seq_along(all_salaries)
 # Reorder columns to have the Index column first
 data <- data[, c("Index", names(data)[-ncol(data)])]
 
-print(head(data))
-
 # Convert list-type columns to characters
 data[] <- lapply(data, function(x) if (is.list(x)) as.character(x) else x)
 
@@ -425,19 +431,72 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 # Data Analysis
 ## Company Distribution (Gladys)
 
+
+
 ## Time Trend (Gabriel)
+
+
 
 ## Company size by frequency (Gabriel)
 
+
+
 ## Experience level by frequency (Bryan)
+# Read CSV file
+job_data <- read.csv("job_data.csv")
+
+# Plot histogram for experience level frequency
+experience_plot <- ggplot(job_data, aes(x = Experience_Level)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Experience Level Frequency",
+       x = "Experience Level",
+       y = "Frequency") +
+  theme_minimal()
+
+# Save the plot as a PNG file
+ggsave("experience_level_histogram.png", experience_plot, width = 8, height = 6)
+
+
 
 ## Education level by frequency (Bryan)
+library(tidyr)
+
+# Read CSV file
+job_data <- read.csv("job_data.csv")
+
+# Remove 'c()' from each entry
+job_data$Education_Level <- gsub("c\\((.*)\\)", "\\1", job_data$Education_Level)
+
+# Convert each entry to a list of education levels
+job_data$Education_Level <- sapply(strsplit(as.character(job_data$Education_Level), ", "), as.list)
+
+# Create a data frame with each education level as a separate row
+education_data <- data.frame(
+  Education_Level = unlist(job_data$Education_Level),
+  stringsAsFactors = FALSE
+)
+
+# Plot histogram for education level
+education_plot <- ggplot(education_data, aes(x = Education_Level)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Education Level Distribution",
+       x = "Education Level",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+
+# Save the plot as a PNG file
+ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
+
+
+
 
 ## job type vs apt (Marcus)
 
-## Job type by frequency (Cheryl)
-library(ggplot2)
 
+
+
+## Job type by frequency (Cheryl)
 # Read the CSV file
 job_data <- read.csv("job_data.csv")
 
@@ -450,12 +509,22 @@ plot <- ggplot(job_data, aes(x = Job_Type)) +
 # Save the plot as a PNG file
 ggsave("job_type_histogram.png", plot, width = 8, height = 6, units = "in", dpi = 300)
 
+
 ## Salary by job type (Cheryl)
 # Read CSV file
 job_data <- read.csv("job_data.csv")
 
 # Install and load required library for plotting
 library(ggplot2)
+
+# Replace "Not specified" with NA in Salary column
+job_data$Salary[job_data$Salary == "Not specified"] <- NA
+
+# Convert Salary column to numeric, ignoring non-numeric entries
+job_data$Salary <- as.numeric(gsub("[^0-9.]+", "", job_data$Salary))
+
+# Filter out rows with non-finite salary values
+job_data <- job_data[is.finite(job_data$Salary), ]
 
 # Get unique job types
 unique_job_types <- unique(job_data$Job_Type)
@@ -467,7 +536,7 @@ boxplot_list <- list()
 for (job_type in unique_job_types) {
   plot_data <- subset(job_data, Job_Type == job_type)
   
-  boxplot <- ggplot(plot_data, aes(x = Job_Type, y = as.numeric(gsub("monthly", "", Salary)))) +
+  boxplot <- ggplot(plot_data, aes(x = Job_Type, y = Salary)) +
     geom_boxplot() +
     labs(title = paste("Boxplot of Salary for", job_type),
          x = "Job Type",
@@ -481,6 +550,7 @@ for (job_type in unique_job_types) {
 for (job_type in unique_job_types) {
   ggsave(paste0("salary_by_", gsub(" ", "_", tolower(job_type)), ".png"), boxplot_list[[job_type]], width = 8, height = 6, units = "in", dpi = 300)
 }
+
 ## Salary vs Experience level (Marcus)
 
 ## Job distribution by location (Gladys)
