@@ -476,14 +476,14 @@ education_data <- data.frame(
   stringsAsFactors = FALSE
 )
 
-# Plot histogram for education level
-education_plot <- ggplot(education_data, aes(x = Education_Level)) +
-  geom_bar(fill = "skyblue", color = "black") +
+# Plot histogram for education level (horizontal)
+education_plot <- ggplot(education_data, aes(y = Education_Level)) +
+  geom_bar(fill = "skyblue", color = "black", stat = "count") +
   labs(title = "Education Level Distribution",
-       x = "Education Level",
-       y = "Frequency") +
+       y = "Education Level",
+       x = "Frequency") +
   theme_minimal() +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))  # Rotate x-axis labels
+  theme(axis.text.y = element_text(hjust = 0))
 
 # Save the plot as a PNG file
 ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
