@@ -305,6 +305,27 @@ print(length(EXP_lvl))
 ## Salary by job category (Cheryl)
 
 ## Salary vs Experience level (Marcus)
+library('ggplot2')
+
+# Read CSV file
+job_data <- read.csv("job_data.csv")
+
+# Replace "Not specified" with NA in Salary column
+job_data$Salary[job_data$Salary == "Not specified"] <- NA
+
+# Convert Salary column to numeric, ignoring non-numeric entries
+job_data$Salary <- as.numeric(gsub("[^0-9.]+", "", job_data$Salary))
+
+# Filter out rows with non-finite salary values
+job_data <- job_data[is.finite(job_data$Salary), ]
+
+# Create scatter plot for salary and experience level
+scatter_plot <- ggplot(job_data, aes(x= Experience_Level, y=Salary)) + 
+  geom_point(size=4, color="blue") + geom_smooth(method=lm, se=FALSE) +
+  labs(x = "Experience Level", y = "Salary (Monthly)")
+
+# Save the plot as a PNG file
+ggsave("salary_by_experience.png", scatter_plot, width = 8, height = 6)
 
 ## Job distribution by location (Gladys)
 
