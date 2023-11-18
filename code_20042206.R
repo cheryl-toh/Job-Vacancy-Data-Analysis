@@ -434,11 +434,33 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 
 
 ## Time Trend (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
 
+# Plot line graph
+time_trend_plot <- ggplot(job_data, aes(x = Date_Posted)) +
+  geom_line(stat = "count", color = "blue") +
+  labs(title = "Job Posting Time Trend",
+       x = "Date",
+       y = "Number of Job Postings") +
+  theme_minimal()
 
+ggsave("time_trend_line_graph.png", time_trend_plot, width = 10, height = 6)
 
 ## Company size by frequency (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
 
+# Plot scatter plot
+company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
+  geom_point(stat = "count", color = "blue") +
+  labs(title = "Company Size Frequency",
+       x = "Company Size",
+       y = "Frequency") +
+  theme_minimal() +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
+ggsave("Company Size by Frequency.png", company_size_frequency, width = 10, height = 6)
 
 
 ## Experience level by frequency (Bryan)
