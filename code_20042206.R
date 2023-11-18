@@ -445,7 +445,7 @@ time_trend_plot <- ggplot(job_data, aes(x = Date)) +
        y = "Number of Job Postings") +
   theme_minimal()
               
-ggsave("time_trend_line_graph", time_trend_plot, width = 10, height = 6)
+ggsave("time_trend_line_graph.png", time_trend_plot, width = 10, height = 6)
 
 ## Company size by frequency (Gabriel)
 # Read CSV file for plot
@@ -460,7 +460,7 @@ company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
   theme_minimal() +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
-ggsave("Company Size by Frequency", company_size_frequency, width = 10, height = 6)
+ggsave("Company Size by Frequency.png", company_size_frequency, width = 10, height = 6)
 
 ## Experience level by frequency (Bryan)
 # Read CSV file
