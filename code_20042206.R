@@ -434,11 +434,32 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 
 
 ## Time Trend (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
 
+# Plot line graph
+time_trend_plot <- ggplot(job_data, aes(x = Date_Posted)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Job Posting Time Trend",
+       x = "Date",
+       y = "Number of Job Postings") +
+  theme_minimal()
 
+ggsave("time_trend_histogram.png", time_trend_plot, width = 10, height = 6)
 
 ## Company size by frequency (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
 
+# Plot histogram
+company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Company Size Frequency",
+       x = "Company Size",
+       y = "Frequency") +
+  theme_minimal()
+
+ggsave("company_by_size_frequency.png", company_size_frequency, width = 10, height = 6)
 
 
 ## Experience level by frequency (Bryan)
@@ -492,8 +513,25 @@ ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
 
 
 ## job type vs apt (Marcus)
+# Read the CSV file
+job_data <- read.csv("job_data.csv")
 
+# Replace "Not specified" with NA in APT column
+job_data$APT[job_data$APT == "Not specified"] <- NA
 
+# Convert APT column to numeric, ignoring non-numeric entries
+job_data$APT <- as.numeric(gsub("days", "", job_data$APT))
+
+# Filter out rows with non-finite APT values
+job_data <- job_data[is.finite(job_data$APT), ]
+
+# Plot histogram for Job Type by Average Processing Time (APT)
+APT_plot <- ggplot(job_data, aes(x = Job_Type, y = APT)) +
+  geom_boxplot(fill = "skyblue") +
+  labs(title = "Boxplot of Average Processing Time of Full Time jobs", x = "Job Type", y = "Average Processing Time")
+
+# Save the plot as a PNG file
+ggsave("job_type_VS_APT.png", APT_plot, width = 8, height = 6)
 
 
 ## Job type by frequency (Cheryl)
@@ -552,9 +590,6 @@ for (job_type in unique_job_types) {
 }
 
 ## Salary vs Experience level (Marcus)
-
-library('ggplot2')
-
 # Read CSV file
 job_data <- read.csv("job_data.csv")
 
