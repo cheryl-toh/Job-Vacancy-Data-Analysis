@@ -1,6 +1,11 @@
 # import statements
 library('rvest')
 library(stringr)
+<<<<<<< Updated upstream
+=======
+library(ggplot2)
+library(dplyr)
+>>>>>>> Stashed changes
 
 # scrapping data
 
@@ -27,7 +32,6 @@ scrape_location <- function(url) {
   location <- page %>% html_nodes('._1hbhsw6ga._1hbhsw6fy') %>% html_node('.y44q7i3 .rqoqz4') %>% html_text()
   location <- gsub("/.*", "", location)
   location <- gsub(" -.*", "", location)
-  location <- as.factor(location)
 }
 
 
@@ -210,8 +214,44 @@ print(length(location))
 
 
 # Data Analysis
-## Company Distribution (Gladys)
+## Company Distribution (Gladys) - Pie Charts
 
+<<<<<<< Updated upstream
+=======
+  # Read CSV file
+    job_data <- read.csv("job_data.csv")
+
+  company_counts <- table(job_data$Company_Name)
+  company_counts_df <- data.frame(Company_Name = names(company_counts), count = as.numeric(company_counts))
+
+  # Select the top 5 companies
+    top_5 <- head(company_counts_df[order(-company_counts_df$count), ], 5)
+  
+  # Distribution of the top 5 companies w/ the most job postings
+    Company_Distribution_top5 <- ggplot(top_5, aes(x = "", y = count, fill = Company_Name)) +
+      geom_col(color = "black") + scale_fill_brewer() +
+      coord_polar(theta = "y") +
+      theme(legend.text = element_text(size = 10),
+            axis.title = element_blank()) +
+      labs(fill = NULL) +
+      geom_text(aes(label = count), position = position_stack(vjust = 0.5)) + 
+      ggtitle("Top 5 Companies with Most Job Postings")
+    ggsave("Company_Distribution_top5.png", plot = Company_Distribution_top5, width = 11, height = 8)
+  
+  
+  # Distribution of All Companies
+    Company_Distribution_all <- ggplot(company_counts_df, aes(x = "", y = count, fill = Company_Name)) +
+      geom_bar(stat = "identity", width = 1) +
+      coord_polar("y") +
+      theme(legend.position = "bottom",
+            legend.text = element_text(size = 10),
+            axis.title = element_blank()) +
+      labs(fill = NULL) +
+      ggtitle("Distribution of Job Postings Across All Companies")
+    ggsave("Company_Distribution_all.png", plot = Company_Distribution_all, width = 22, height = 12)
+
+
+>>>>>>> Stashed changes
 ## Time Trend (Gabriel)
 
 ## Company size by frequency (Bryan)
@@ -231,6 +271,67 @@ print(length(location))
 ## Salary vs Experience level (Marcus)
 
 ## Job distribution by location (Gladys)
-
-
-
+  #scraping data for states and cities
+    geo_url <- 'https://www.wiki3.en-us.nina.az/List_of_cities_and_towns_in_Malaysia_by_population.html'
+    geo_webpage <- read_html(geo_url)
+    states <- geo_webpage %>% html_nodes('.flagicon div div') %>% html_text()
+    geo_location <- geo_webpage %>% html_nodes('td:nth-child(2) a') %>% html_text()
+    geo_location <- geo_location[1:60]
+    my_states_cities <- data.frame(states, geo_location)
+    my_states_cities$states <- gsub("^.{2}", "_", my_states_cities$states)
+    my_states_cities$states <- gsub(" ", "_", my_states_cities$states)
+    my_states_cities$states <- gsub("^_+|_+$", "", my_states_cities$states)
+    my_states_cities$states <- gsub("_", " ", my_states_cities$states)
+    my_states_cities$states <- gsub("Federal Territories", "Kuala Lumpur", my_states_cities$states)
+  
+  # Levels for states
+    states_list <- c(as.list(unique(my_states_cities$states)), "Other Small Towns")
+    states_vector <- as.character(states_list)
+  
+  # merging states into merge_geo_data
+    # add state according to cities in geo_location
+      merged_geo_data <- job_data %>% rename(geo_location = Location) %>% left_join(my_states_cities, by = "geo_location")
+  
+    # if statement to add state in merged_geo_data$states if geo_location = my_states_cities$states 
+      for (geo_location in merged_geo_data$geo_location){
+        if (geo_location %in% my_states_cities$states){
+          row_number <- which(merged_geo_data$geo_location == geo_location)
+          merged_geo_data$states[row_number] <- geo_location
+        }
+      }
+      
+    # data cleaning
+      merged_geo_data$states[is.na(merged_geo_data$states)] <- "Other Small Towns"
+      merged_geo_data$geo_location <- gsub("Melaka", "Malacca", merged_geo_data$geo_location)
+      
+    # adding levels into merged_geo_data$states 
+      merged_geo_data_factor <- merged_geo_data
+      merged_geo_data_factor$states <- factor(merged_geo_data$states, levels = states_vector)
+  
+  #stacked bar graph
+    JD_count <- table(merged_geo_data$states)
+    JD_count_df <- data.frame(States = names(JD_count), Count = as.numeric(JD_count))
+  
+    # job distribution by location stack bar graph
+      Job_Distribution_stacked <- ggplot(merged_geo_data_factor, aes(x = states, fill = Job_Title)) +
+        geom_bar(position = "stack", width = 0.75) +
+        ylim(0, 30) +
+        labs(title = "Job Distribution by States", x = "Location", y = "Count") +
+        theme(axis.title.y = element_text(vjust = 2),
+              axis.title.x = element_text(vjust = -0.09)) +
+        theme(legend.position = "none")
+      ggsave("Job_Distribution_Stacked.png", plot = Job_Distribution_stacked, width = 11, height = 8)
+      
+    
+    # job distribution by location (percentage)
+      Job_Distribution_total <- ggplot(JD_count_df, aes(x = reorder(States, -Count), y = Count, fill = Count)) +
+        geom_bar(stat = "identity", width = 0.75) +
+        ylim(0, 30) +
+        labs(title = "Job Distribution by All States", x = "Location", y = "Count") +
+        geom_text(aes(label = paste(as.character(round(100*Count/sum(Count), digits = 1)), "%")), vjust = -0.5) +
+        theme(axis.title.y = element_text(vjust = 2),
+              axis.title.x = element_text(vjust = -0.09)) +
+        theme(legend.position = "none")
+      ggsave("Job_Distribution_Total.png", plot = Job_Distribution_total, width = 11, height = 8)
+      
+  
