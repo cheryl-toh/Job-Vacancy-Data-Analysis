@@ -14,13 +14,8 @@ scrape_title <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  job_title <- page %>% html_nodes('.im1gct2 .z1s6m00') %>% html_text()
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("\\(.*\\)", "", job_title)
-  job_title <- gsub(" -.*", "", job_title)
-  job_title <- gsub(" –.*", "", job_title)
-  job_title <- gsub(" /.*", "", job_title)
+  job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
+  job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
 }
 
 
@@ -29,9 +24,12 @@ scrape_location <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  location <- page %>% html_nodes('._1hbhsw6ga._1hbhsw6fy') %>% html_node('.y44q7i3 .rqoqz4') %>% html_text()
+  location <- page %>% html_nodes('.a1msqi6q .a1msqi6u ._1wkzzau0 .szurmz4 .a1msqi6m:nth-child(1) .lnocuo7') %>% html_text()
   location <- gsub("/.*", "", location)
+<<<<<<< Updated upstream
   location <- gsub(" -.*", "", location)
+=======
+>>>>>>> Stashed changes
 }
 
 
@@ -214,6 +212,7 @@ print(length(location))
 
 
 # Data Analysis
+<<<<<<< Updated upstream
 ## Company Distribution (Gladys) - Pie Charts
 
 <<<<<<< Updated upstream
@@ -249,6 +248,37 @@ print(length(location))
       labs(fill = NULL) +
       ggtitle("Distribution of Job Postings Across All Companies")
     ggsave("Company_Distribution_all.png", plot = Company_Distribution_all, width = 22, height = 12)
+=======
+## Company Distribution (Gladys)
+company_counts <- table(job_data$Company_Name)
+company_counts_df <- data.frame(Company_Name = names(company_counts), count = as.numeric(company_counts))
+
+# Select the top 5 companies
+top_5 <- head(company_counts_df[order(-company_counts_df$count), ], 5)
+
+# Distribution of the top 5 companies w/ the most job postings
+Company_Distribution_top5 <- ggplot(top_5, aes(x = "", y = count, fill = Company_Name)) +
+  geom_col(color = "black") + scale_fill_brewer() +
+  coord_polar(theta = "y") +
+  theme(legend.text = element_text(size = 10),
+        axis.title = element_blank()) +
+  labs(fill = NULL) +
+  geom_text(aes(label = count), position = position_stack(vjust = 0.5)) + 
+  ggtitle("Top 5 Companies with the Most Job Postings")
+ggsave("Company_Distribution_top5.png", plot = Company_Distribution_top5, width = 11, height = 8)
+
+Company_Distribution_all <- ggplot(company_counts_df, aes(x = "", y = count, fill = Company_Name)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 10),
+        axis.title = element_blank()) +
+  labs(fill = NULL) +
+  ggtitle("Distribution of Job Postings Across Companies")
+ggsave("Company_Distribution_all.png", plot = Company_Distribution_all, width = 18, height = 12)
+
+
+>>>>>>> Stashed changes
 
 
 >>>>>>> Stashed changes
@@ -271,6 +301,7 @@ print(length(location))
 ## Salary vs Experience level (Marcus)
 
 ## Job distribution by location (Gladys)
+<<<<<<< Updated upstream
   #scraping data for states and cities
     geo_url <- 'https://www.wiki3.en-us.nina.az/List_of_cities_and_towns_in_Malaysia_by_population.html'
     geo_webpage <- read_html(geo_url)
@@ -335,3 +366,38 @@ print(length(location))
       ggsave("Job_Distribution_Total.png", plot = Job_Distribution_total, width = 11, height = 8)
       
   
+=======
+states_data <- job_data
+states_data$States <- states_data$Location
+states_data$States <- gsub(".*,", "", states_data$States)
+states_data$States <- gsub("^ +| +$", "", states_data$States)
+states_data$States <- gsub("Shah Alam", "Selangor", states_data$States)
+
+# count df
+states_count <- table(states_data$States)
+states_count_df <- data.frame(States = names(states_count), Count = as.numeric(states_count))
+
+# job distribution by location stack bar graph
+Job_Distribution_stacked <- ggplot(states_data, aes(x = States, fill = Job_Title)) +
+  geom_bar(position = "stack", width = 0.75) +
+  labs(title = "Job Distribution by States", x = "States", y = "Count") +
+  theme(axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -0.09)) +
+  theme(legend.position = "none")
+ggsave("Job_Distribution_Stacked.png", plot = Job_Distribution_stacked, width = 11, height = 8)
+
+# job distribution by location (percentage)
+Job_Distribution_total <- ggplot(states_count_df, aes(x = reorder(States, -Count), y = Count, fill = Count)) +
+  geom_bar(stat = "identity", width = 0.75) +
+  labs(title = "Job Distribution by All States", x = "States", y = "Count") +
+  geom_text(aes(label = paste(as.character(round(100*Count/sum(Count), digits = 1)), "%")), vjust = -0.5) +
+  theme(axis.title.y = element_text(vjust = 2),
+        axis.title.x = element_text(vjust = -0.09)) +
+  theme(legend.position = "none")
+ggsave("Job_Distribution_Total.png", plot = Job_Distribution_total, width = 11, height = 8)
+
+
+
+
+
+>>>>>>> Stashed changes
