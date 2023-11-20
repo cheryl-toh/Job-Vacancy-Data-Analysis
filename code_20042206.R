@@ -218,7 +218,6 @@ scrape_co_size <- function(url) {
   return(all_company_size)
 }
 
-
 ## job type (Bryan)
 scrape_job_type <- function(url) {
   
@@ -245,12 +244,17 @@ scrape_job_type <- function(url) {
     
     job_type <- article_page %>% html_nodes('.a1msqi6u:nth-child(3) .a1msqir+ .a1msqir') %>% html_text()
     
+    job_types <- c(job_type, job_types)
+    
     # Explicitly close the connection
     rm(article_page)
   }
     
   return(job_types)
 }
+  
+
+
   
 
 
