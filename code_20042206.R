@@ -118,7 +118,7 @@ scrape_salary <- function(url) {
   page <- read_html(url)
   
   # Select all job elements
-  job_elements <- html_nodes(page, ".rqoqz0")
+  job_elements <- html_nodes(page, ".uo6mkb")
   
   # Initialize vectors to store job titles and extracted salaries
   extracted_salary <- NULL
@@ -127,22 +127,21 @@ scrape_salary <- function(url) {
   for (i in 1:length(job_elements)) {
     
     # Check if salary information is present
-    if (length(html_text(html_nodes(job_elements[i], '.y44q7ih+ .y44q7ih'))) == 0){
+    if (length(html_text(html_nodes(job_elements[i], '._16v7pfz3'))) == 0){
       
       extracted_salary[i] <- "NA"
       
     } else {
       
-      extracted_salary[i] <- html_text(html_nodes(job_elements[i],'.y44q7ih+ .y44q7ih'))
+      # Extract the full salary text
+      salary_text <- html_text(html_nodes(job_elements[i], '._16v7pfz3'))
       
       # Extract numeric values from the salary text
-      lower_bound <- as.numeric(gsub("[^0-9.]+", "", strsplit(extracted_salary[i], " - ")[[1]][1]))
-      upper_bound <- as.numeric(gsub("[^0-9]+", "", strsplit(extracted_salary[i], " - ")[[1]][2]))
+      salary_bounds <- strsplit(salary_text, " – | - ")
       
-      # Convert the lower bound to a consistent format
-      if (grepl("K", extracted_salary[i])) {
-        lower_bound <- lower_bound * 1000
-      }
+      # Convert the lower and upper bounds to numeric values
+      lower_bound <- as.numeric(gsub("[^0-9]+", "", salary_bounds[[1]][1]))
+      upper_bound <- as.numeric(gsub("[^0-9]+", "", salary_bounds[[1]][2]))
       
       # Extract the currency
       currency <- gsub("[0-9,]+", "", extracted_salary[i])
@@ -152,9 +151,7 @@ scrape_salary <- function(url) {
         average_salary <- mean(c(lower_bound, upper_bound))
         extracted_salary[i] <- average_salary
       } else {
-        
         extracted_salary[i] <- lower_bound
-        
       }
     }
   }
@@ -213,94 +210,61 @@ scrape_job_type <- function(url) {
   
 }
 
-
-## average processing time (Marcus)
-scrape_ATP_levels <- function(url) {
+## Classification (Marcus)
+scrape_class <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   
-  # Define empty list for all APT levels
-  all_APT_levels <- list()
+  #Scraping the classification section using CSS selector
+  class <- page %>% html_nodes('.a1msqibu:nth-child(5)') %>% html_text()
   
-  # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  #Removing the brackets
+  class <- gsub("[()]", "", class)
   
-  # Loop through each job link
-  for (job_link in job_links) {
-    
-    # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
-    
-    # Add delay to prevent request limit error
-    Sys.sleep(1)
-    
-    # Navigate to the article page
-    article_page <- read_html(article_url)
-    
-    # Replace ".your-class" with the actual class containing APT information
-    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(3) .y44q7i1")
-    
-    if (!grepl("days", APT_element)) {
-      extracted_APT <- "NA"
-    }else {
-      # Extract text from the APT element
-      extracted_APT <- html_text(APT_element)
-    }
-    
-    APT_levels <- unlist(extracted_APT)
-    
-    # Append the list of APT levels to the parent list
-    all_APT_levels <- c(all_APT_levels, list(APT_levels))
-    
-    # Explicitly close the connection
-    rm(article_page)
-  }
+  #Convert to factor
+  class <- as.factor(class)
   
-  return(all_APT_levels)
+  # Explicitly close the connection
+  rm(page)
+  return(class)
 }
 
-## experience level (Marcus)
-scrape_exp_level <- function(url) {
+## Ratings (Marcus)
+scrape_ratings <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   
-  # Define empty list for all experience levels
-  all_exp_levels <- list()
+  # Select all job elements
+  job_elements <- html_nodes(page, ".uo6mkb")
   
-  # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  # Initialize vectors to store job titles and extracted ratings
+  extracted_ratings <- NULL
   
-  # Loop through each job link
-  for (job_link in job_links) {
+  # Loop through each job element
+  for (i in 1:length(job_elements)) {
     
-    # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
-    
-    # Add delay to prevent request limit error
-    Sys.sleep(1)
-    
-    # Navigate to the article page
-    article_page <- read_html(article_url)
-    
-    # Replace ".your-class" with the actual class containing experience information
-    exp_element <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(3) .y44q7i1")
-    
-    # Extract text from the experience element
-    extracted_exp <- html_text(exp_element)
-    
-    
-    exp_levels <- unlist(extracted_exp)
-    
-    # Append the list of education levels to the parent list
-    all_exp_levels <- c(all_exp_levels, list(exp_levels))
-    
-    # Explicitly close the connection
-    rm(article_page)
+    # Check if ratings are present
+    if (length(html_text(html_nodes(job_elements[i], '._1jcz3123'))) == 0){
+      
+      extracted_ratings[i] <- "NA"
+      
+    } else {
+      
+      # Extract the ratings
+      extracted_ratings <- html_text(html_nodes(job_elements[i], '._1jcz3123'))
+      
+      # Convert to numeric
+      extracted_ratings <- as.numeric(extracted_ratings)
+    }
   }
   
-  return(all_exp_levels)
+  rm(page)
+  
+  # Return the extracted ratings
+  return(extracted_ratings)
+  
 }
 
 
@@ -314,7 +278,7 @@ scrape_edu_level <- function(url) {
   all_education_levels <- list()
   
   # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
   
   # Loop through each job link
   for (job_link in job_links) {
@@ -328,24 +292,23 @@ scrape_edu_level <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    # Check if the element contains the text "Qualification"
-    qualification_check <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(2) .y44q7i3, ._5135gei ._5135gei:nth-child(1) .pmwfa57:nth-child(2) .y44q7i3") %>% html_text()
-
-    if (!grepl("Qualification", qualification_check, ignore.case = TRUE)) {
-      # If "Qualification" is not present, set education level to NA
-      all_education_levels <- c(all_education_levels, list("Not Specified"))
+    # Class containing education information
+    education_elements <- article_page %>% html_nodes("._1pehz540 li, p~ p+ p")
+    
+    # Extract text from education elements
+    extracted_education <- html_text(education_elements)
+    
+    # Keywords to check for in education text
+    edu_keywords <- c("diploma", "advanced/higher/graduate diploma", "degree", "pre-u", "o level", "a level", "master", "phd")
+    
+    # Check for keywords in the education text
+    matched_keywords <- edu_keywords[sapply(edu_keywords, function(keyword) any(grepl(keyword, extracted_education, ignore.case = TRUE)))]
+    
+    # If keywords are found, append to the parent list; otherwise, set education level to "Not Specified"
+    if (length(matched_keywords) > 0) {
+      all_education_levels <- c(all_education_levels, list(matched_keywords))
     } else {
-      # Class containing education information
-      education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
-      
-      # Extract text from the education element
-      extracted_education <- html_text(education_element)
-      
-      # Split the extracted education text into a list of education levels
-      edu_levels <- unlist(strsplit(extracted_education, ", "))
-      
-      # Append the list of education levels to the parent list
-      all_education_levels <- c(all_education_levels, list(edu_levels))
+      all_education_levels <- c(all_education_levels, list("Not Specified"))
     }
     
     # Explicitly close the connection
@@ -373,7 +336,7 @@ url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
-for (page_number in 1:2) {
+for (page_number in 1) {
   page_url <- paste0(url, "?pg=", page_number)
   all_salaries <- c(all_salaries, scrape_salary(page_url))
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
@@ -386,6 +349,9 @@ for (page_number in 1:2) {
   job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
+
+print(head(all_salaries))
+print(head(all_education_levels))
 
 length_of_data <- length(all_salaries)
 
@@ -513,25 +479,8 @@ ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
 
 
 ## job type vs apt (Marcus)
-# Read the CSV file
-job_data <- read.csv("job_data.csv")
 
-# Replace "Not specified" with NA in APT column
-job_data$APT[job_data$APT == "Not specified"] <- NA
 
-# Convert APT column to numeric, ignoring non-numeric entries
-job_data$APT <- as.numeric(gsub("days", "", job_data$APT))
-
-# Filter out rows with non-finite APT values
-job_data <- job_data[is.finite(job_data$APT), ]
-
-# Plot histogram for Job Type by Average Processing Time (APT)
-APT_plot <- ggplot(job_data, aes(x = Job_Type, y = APT)) +
-  geom_boxplot(fill = "skyblue") +
-  labs(title = "Boxplot of Average Processing Time of Full Time jobs", x = "Job Type", y = "Average Processing Time")
-
-# Save the plot as a PNG file
-ggsave("job_type_VS_APT.png", APT_plot, width = 8, height = 6)
 
 
 ## Job type by frequency (Cheryl)
@@ -590,26 +539,5 @@ for (job_type in unique_job_types) {
 }
 
 ## Salary vs Experience level (Marcus)
-# Read CSV file
-job_data <- read.csv("job_data.csv")
 
-# Replace "Not specified" with NA in Salary column
-job_data$Salary[job_data$Salary == "Not specified"] <- NA
-
-# Convert Salary column to numeric, ignoring non-numeric entries
-job_data$Salary <- as.numeric(gsub("[^0-9.]+", "", job_data$Salary))
-
-# Filter out rows with non-finite salary values
-job_data <- job_data[is.finite(job_data$Salary), ]
-
-# Create scatter plot for salary and experience level
-scatter_plot <- ggplot(job_data, aes(x= Experience_Level, y=Salary)) + 
-  geom_point(size=4, color="blue") + geom_smooth(method=lm, se=FALSE) +
-  labs(x = "Experience Level", y = "Salary (Monthly)")
-
-# Save the plot as a PNG file
-ggsave("salary_by_experience.png", scatter_plot, width = 8, height = 6)
-                 
 ## Job distribution by location (Gladys)
-
-
