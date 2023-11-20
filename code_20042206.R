@@ -427,9 +427,9 @@ data <- data.frame(
   Job_Type = rep("Not specified", length_of_data),
   Company_Size = rep("Not specified", length_of_data),
   Education_Level = rep("Not specified", length_of_data),
-  Experience_Level = rep("Not specified", length_of_data),
+  Classification = rep("Not specified", length_of_data),
   Date_Posted = rep("Not specified", length_of_data),
-  APT = rep("Not specified", length_of_data)
+  Ratings = rep("Not specified", length_of_data)
 )
 
 # Populate the data frame with actual values
@@ -437,8 +437,8 @@ data$Salary <- all_salaries
 data$Education_Level <- all_education_levels
 data$Job_Title <- job_title
 data$Location <- location
-data$APT <- APT
-data$Experience_Level <- EXP_lvl
+data$Ratings <- rating
+data$Classification <- class
 data$Date_Posted <- date
 data$Company_Name <- company_name
 data$Job_Type <- job_type
