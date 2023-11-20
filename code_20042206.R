@@ -438,8 +438,9 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 job_data <- read.csv("job_data.csv")
 
 # Plot line graph
-time_trend_plot <- ggplot(job_data, aes(x = Date)) +
-  geom_line(stat = "count", color = "blue") +
+time_trend_plot <- ggplot(job_data, aes(x = Date_Posted)) +
+  geom_bar(fill = "skyblue", color = "black") +
+
   labs(title = "Job Posting Time Trend",
        x = "Date",
        y = "Number of Job Postings") +
@@ -461,6 +462,23 @@ company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
   theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ggsave("Company Size by Frequency.png", company_size_frequency, width = 10, height = 6)
+
+ggsave("time_trend_histogram.png", time_trend_plot, width = 10, height = 6)
+
+## Company size by frequency (Gabriel)
+# Read CSV file for plot
+job_data <- read.csv("job_data.csv")
+
+# Plot histogram
+company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
+  geom_bar(fill = "skyblue", color = "black") +
+  labs(title = "Company Size Frequency",
+       x = "Company Size",
+       y = "Frequency") +
+  theme_minimal()
+
+ggsave("company_by_size_frequency.png", company_size_frequency, width = 10, height = 6)
+
 
 ## Experience level by frequency (Bryan)
 # Read CSV file
@@ -508,7 +526,6 @@ education_plot <- ggplot(education_data, aes(y = Education_Level)) +
 
 # Save the plot as a PNG file
 ggsave("education_level_histogram.png", education_plot, width = 10, height = 6)
-
 
 ## job type vs apt (Marcus)
 
