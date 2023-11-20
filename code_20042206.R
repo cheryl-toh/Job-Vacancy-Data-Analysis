@@ -13,6 +13,9 @@ scrape_title <- function(url) {
   job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
   job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
   
+  print("finish scraping job title")
+  
+  return(job_title)
 }
 
 
@@ -25,6 +28,9 @@ scrape_location <- function(url) {
   location <- gsub("/.*", "", location)
   location <- gsub(" -.*", "", location)
   
+  print("finish scraping location")
+  
+  return(location)
 }
 
 
@@ -154,12 +160,13 @@ scrape_salary <- function(url) {
   
   rm(page)
   
+  print("finish scraping salary")
+  
   # Return the extracted salaries
   return(extracted_salary)
   
 }
   
-
 ## company size (Bryan)
 scrape_co_size <- function(url) {
   
@@ -167,43 +174,91 @@ scrape_co_size <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
-
+  
+  # Define empty list for all education levels
+  all_company_size <- list()
+  
+  # Select all job links
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
+  
+  # Loop through each job link
   for (job_link in job_links) {
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  
     
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
     
+    # Add delay to prevent request limit error
     Sys.sleep(1)
     
-    
+    # Navigate to the article page
     article_page <- read_html(article_url)
     
+    # Check if there is a link for the company
+    company_title <- article_page %>% html_node(".lnocuod ._126xumx1") %>% html_attr("href")
     
-    company_size <- article_page %>% html_nodes('._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(2) .y44q7i1') %>% html_text()
-    
-    if (!grepl("Employees", company_size)) {
-      all_company_size <- c(all_company_size, "NA")
+    if(is.na(company_title)){
+      all_company_size <- c(all_company_size, "Not Specified")
     } else {
-      all_company_size <- c(all_company_size, company_size)
+      company_url <- paste0("https://www.jobstreet.com.my", company_title)
+      
+      # Add delay to prevent request limit error
+      Sys.sleep(1)
+      
+      # Navigate to the article page
+      company_page <- read_html(company_url)
+      
+      # Class containing education information
+      size_elements <- company_page %>% html_nodes(".oNh6PGJHylmCFDXjHsXq span")
+      
+      # Extract text from education elements
+      extracted_size <- html_text(size_elements)
+      
+      all_company_size <- c(all_company_size, extracted_size[1])
     }
     
     rm(article_page)
     
   }
+  print("finish scraping company size")
+  
   return(all_company_size)
 }
-
 
 ## job type (Bryan)
 scrape_job_type <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  job_type <- page %>% html_nodes('._1hbhsw67y~ ._1hbhsw652 ._1hbhsw6h') %>% html_text()
-  # Explicitly close the connection
-  rm(page)
-  return(job_type)
   
+  # Define empty list for all education levels
+  job_types <- list()
+  
+  # Select all job links
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
+  
+  # Loop through each job link
+  for (job_link in job_links) {
+    
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
+    
+    job_type <- article_page %>% html_nodes('.a1msqi6u:nth-child(3) .a1msqir+ .a1msqir') %>% html_text()
+    
+    job_types <- c(job_type, job_types)
+    
+    # Explicitly close the connection
+    rm(article_page)
+  }
+  
+  print("finish scraping job types")
+  
+  return(job_types)
 }
 
 
@@ -221,6 +276,9 @@ scrape_class <- function(url) {
   
   # Explicitly close the connection
   rm(page)
+  
+  print("finish scraping class")
+  
   return(class)
 }
 
@@ -255,6 +313,8 @@ scrape_ratings <- function(url) {
   }
   
   rm(page)
+  
+  print("finish scraping ratings")
   
   # Return the extracted ratings
   return(extracted_ratings)
@@ -310,6 +370,8 @@ scrape_edu_level <- function(url) {
     rm(article_page)
   }
   
+  print("finish scraping eduaction level")
+  
   # Return the extracted education levels
   return(all_education_levels)
   
@@ -339,14 +401,20 @@ for (page_number in 1) {
   location <- c(location, scrape_location(page_url))
   class <- c(class, scrape_class(page_url))
   rating <- c(rating, scrape_ratings(page_url))
-  date <- c(date, scrape_date(page_url))
-  company_name <- c(company_name, scrape_co_name(page_url))
+  #date <- c(date, scrape_date(page_url))
+  #company_name <- c(company_name, scrape_co_name(page_url))
   job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-print(head(job_title))
-print(head(location))
+print(length(all_salaries))
+print(length(all_education_levels))
+print(length(job_title))
+print(length(location))
+print(length(class))
+print(length(rating))
+print(length(company_size))
+print(length(job_type))
 
 length_of_data <- length(all_salaries)
 
@@ -536,6 +604,3 @@ for (job_type in unique_job_types) {
 ## Salary vs Experience level (Marcus)
 
 ## Job distribution by location (Gladys)
-
-
-
