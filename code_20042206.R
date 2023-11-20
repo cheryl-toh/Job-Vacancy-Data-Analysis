@@ -227,38 +227,48 @@ scrape_class <- function(url) {
 ## Ratings (Marcus)
 scrape_ratings <- function(url) {
   
-  # Read page URL
-  page <- read_html(url)
+  # Define empty list for all ratings
+  all_ratings <- list()
   
-  # Select all job elements
-  job_elements <- html_nodes(page, ".uo6mkb")
+  # Select all job links
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
   
-  # Initialize vectors to store job titles and extracted ratings
-  extracted_ratings <- NULL
-  
-  # Loop through each job element
-  for (i in 1:length(job_elements)) {
+  # Loop through each job link
+  for (job_link in job_links) {
     
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
+    
+    # Class containing ratings
+    ratings_elements <- article_page %>% html_nodes("._1jcz3123")
+    
+    # Extract text from ratings elements
+    extracted_ratings <- html_text(ratings_elements)
+      
     # Check if ratings are present
-    if (length(html_text(html_nodes(job_elements[i], '._1jcz3123'))) == 0){
-      
-      extracted_ratings[i] <- "NA"
-      
-    } else {
-      
-      # Extract the ratings
-      extracted_ratings <- html_text(html_nodes(job_elements[i], '._1jcz3123'))
-      
-      # Convert to numeric
-      extracted_ratings <- as.numeric(extracted_ratings)
-    }
-  }
-  
+      if (length(extracted_ratings) == 0){
+        
+        all_ratings <- c(all_ratings, list("NA"))
+        
+      } else {
+        
+        # Append to parent list
+        all_ratings <- c(all_ratings, list(extracted_ratings))
+        
+        # Convert to numeric
+        all_ratings <- as.numeric(all_ratings)
+      }
+  }  
   rm(page)
   
   # Return the extracted ratings
-  return(extracted_ratings)
-  
+  return(all_ratings)
 }
 
 
