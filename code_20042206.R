@@ -173,7 +173,7 @@ scrape_co_size <- function(url) {
   
   # Select all job links
   job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
-  
+  print(job_links)
   # Loop through each job link
   for (job_link in job_links) {
     
@@ -186,31 +186,35 @@ scrape_co_size <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    #class containing company name
-    company_title <- article_page %>% html_nodes(".lnocuod")
+    # Check if there is a link for the company
+    company_title <- article_page %>% html_node(".lnocuod ._126xumx1") %>% html_attr("href")
     
-    #get url of company overview
-    for (company_link in company_title) {
-      if (html_name(company_link) == "a"){
-        
-        overview_url <- html_attr(company_link,"href")
-        
-        overview_page <- read_html(overview_url)
-        
-        company_size <- overview_page %>% html_nodes('.oNh6PGJHylmCFDXjHsXq span') %>% html_text()
-        
-      }
-    }
-
-    if (!grepl("company size", company_size)) {
-      all_company_size <- c(all_company_size, "NA")
+    print(company_title)
+    
+    if(is.na(company_title)){
+      all_company_size <- c(all_company_size, "Not Specified")
     } else {
-      all_company_size <- c(all_company_size, company_size)
+      company_url <- paste0("https://www.jobstreet.com.my", company_title)
+      
+      # Add delay to prevent request limit error
+      Sys.sleep(1)
+      
+      # Navigate to the article page
+      company_page <- read_html(company_url)
+      
+      # Class containing education information
+      size_elements <- company_page %>% html_nodes(".oNh6PGJHylmCFDXjHsXq span")
+      
+      # Extract text from education elements
+      extracted_size <- html_text(size_elements)
+      
+      all_company_size <- c(all_company_size, extracted_size[1])
     }
     
     rm(article_page)
     
   }
+  
   return(all_company_size)
 }
 
@@ -377,20 +381,18 @@ print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
 for (page_number in 1) {
   page_url <- paste0(url, "?pg=", page_number)
-  all_salaries <- c(all_salaries, scrape_salary(page_url))
-  all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  job_title <- c(job_title, scrape_title(page_url))
-  location <- c(location, scrape_location(page_url))
-  class <- c(class, scrape_class(page_url))
-  rating <- c(rating, scrape_ratings(page_url))
-  date <- c(date, scrape_date(page_url))
-  company_name <- c(company_name, scrape_co_name(page_url))
-  job_type <- c(job_type, scrape_job_type(page_url))
+  #all_salaries <- c(all_salaries, scrape_salary(page_url))
+  #all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  #job_title <- c(job_title, scrape_title(page_url))
+  #location <- c(location, scrape_location(page_url))
+  #class <- c(class, scrape_class(page_url))
+  #rating <- c(rating, scrape_ratings(page_url))
+  #date <- c(date, scrape_date(page_url))
+  #company_name <- c(company_name, scrape_co_name(page_url))
+  #job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-print(head(job_title))
-print(head(location))
 
 length_of_data <- length(all_salaries)
 
