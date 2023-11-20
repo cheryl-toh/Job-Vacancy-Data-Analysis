@@ -186,13 +186,23 @@ scrape_co_size <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    company_url <-  paste0("https://www.jobstreet.com.my", company_link) 
+    #class containing company name
+    company_title <- article_page %>% html_nodes(".lnocuod")
     
-    company_read <- read_html(company_link)
-    
-    company_size <- article_page %>% html_nodes('.oNh6PGJHylmCFDXjHsXq span') %>% html_text()
-    
-    if (!grepl("Employees", company_size)) {
+    #get url of company overview
+    for (company_link in company_title) {
+      if (html_name(company_link) == "a"){
+        
+        overview_url <- html_attr(company_link,"href")
+        
+        overview_page <- read_html(overview_url)
+        
+        company_size <- overview_page %>% html_nodes('.oNh6PGJHylmCFDXjHsXq span') %>% html_text()
+        
+      }
+    }
+
+    if (!grepl("company size", company_size)) {
       all_company_size <- c(all_company_size, "NA")
     } else {
       all_company_size <- c(all_company_size, company_size)
@@ -212,7 +222,7 @@ scrape_job_type <- function(url) {
   page <- read_html(url)
   
   # Define empty list for all education levels
-  all_company_size <- list()
+  job_types <- list()
   
   # Select all job links
   job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
@@ -228,13 +238,14 @@ scrape_job_type <- function(url) {
     
     # Navigate to the article page
     article_page <- read_html(article_url)
-    job_type <- page %>% html_nodes('._1wkzzau0 a1msqi4y a1msqir') %>% html_text()
+    
+    job_type <- article_page %>% html_nodes('.a1msqi6u:nth-child(3) .a1msqir+ .a1msqir') %>% html_text()
     
     # Explicitly close the connection
-    rm(page)
+    rm(article_page)
   }
     
-  return(job_type)
+  return(job_types)
 }
   
 
