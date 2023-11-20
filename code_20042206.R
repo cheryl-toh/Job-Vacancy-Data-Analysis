@@ -153,7 +153,7 @@ scrape_salary <- function(url) {
   }
   
   rm(page)
-  
+  print("finish scrapping salary")
   # Return the extracted salaries
   return(extracted_salary)
   
@@ -221,17 +221,23 @@ scrape_class <- function(url) {
   
   # Explicitly close the connection
   rm(page)
+  
+  print("finish scrapping class")
   return(class)
 }
 
 ## Ratings (Marcus)
 scrape_ratings <- function(url) {
   
+  # Read page URL
+  page <- read_html(url)
+  
   # Define empty list for all ratings
   all_ratings <- list()
   
   # Select all job links
   job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
+  print(job_links)
   
   # Loop through each job link
   for (job_link in job_links) {
@@ -252,20 +258,21 @@ scrape_ratings <- function(url) {
     extracted_ratings <- html_text(ratings_elements)
       
     # Check if ratings are present
-      if (length(extracted_ratings) == 0){
+    if (length(extracted_ratings) == 0){
         
-        all_ratings <- c(all_ratings, list("NA"))
+      all_ratings <- c(all_ratings, list("NA"))
         
-      } else {
+    } else {
         
-        # Append to parent list
-        all_ratings <- c(all_ratings, list(extracted_ratings))
-        
-        # Convert to numeric
-        all_ratings <- as.numeric(all_ratings)
-      }
+      # Append to parent list
+      all_ratings <- c(all_ratings, extracted_ratings)
+      
+      # Convert to numeric
+      all_ratings <- as.numeric(all_ratings)
+    }
+    rm(article_page)
   }  
-  rm(page)
+  
   
   # Return the extracted ratings
   return(all_ratings)
@@ -319,7 +326,7 @@ scrape_edu_level <- function(url) {
     # Explicitly close the connection
     rm(article_page)
   }
-  
+  print("finish scrapping edu_level")
   # Return the extracted education levels
   return(all_education_levels)
   
@@ -349,14 +356,11 @@ for (page_number in 1) {
   location <- c(location, scrape_location(page_url))
   class <- c(class, scrape_class(page_url))
   rating <- c(rating, scrape_ratings(page_url))
-  date <- c(date, scrape_date(page_url))
-  company_name <- c(company_name, scrape_co_name(page_url))
-  job_type <- c(job_type, scrape_job_type(page_url))
-  company_size <- c(company_size, scrape_co_size(page_url))
+  #date <- c(date, scrape_date(page_url))
+  #company_name <- c(company_name, scrape_co_name(page_url))
+  #job_type <- c(job_type, scrape_job_type(page_url))
+  #company_size <- c(company_size, scrape_co_size(page_url))
 }
-
-print(head(job_title))
-print(head(location))
 
 length_of_data <- length(all_salaries)
 
