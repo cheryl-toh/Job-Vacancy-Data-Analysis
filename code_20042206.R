@@ -10,13 +10,9 @@ scrape_title <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  job_title <- page %>% html_nodes('.im1gct2 .z1s6m00') %>% html_text()
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("\\(.*\\)", "", job_title)
-  job_title <- gsub(" -.*", "", job_title)
-  job_title <- gsub(" –.*", "", job_title)
-  job_title <- gsub(" /.*", "", job_title)
+  job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
+  job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
+  
 }
 
 
@@ -25,10 +21,10 @@ scrape_location <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  location <- page %>% html_nodes('._1hbhsw6ga._1hbhsw6fy') %>% html_node('.y44q7i3 .rqoqz4') %>% html_text()
+  location <- page %>% html_nodes('.a1msqi6q .a1msqi6u ._1wkzzau0 .szurmz4 .a1msqi6m:nth-child(1) .lnocuo7') %>% html_text()
   location <- gsub("/.*", "", location)
   location <- gsub(" -.*", "", location)
-  location <- as.factor(location)
+  
 }
 
 
@@ -94,7 +90,7 @@ scrape_date <- function(url) {
     }
     
     extracted_date <- html_text(date_element)
-  
+    
     
     # Process the date information
     processed_date <- process_date(extracted_date)
@@ -162,7 +158,7 @@ scrape_salary <- function(url) {
   return(extracted_salary)
   
 }
-  
+
 
 ## company size (Bryan)
 scrape_co_size <- function(url) {
@@ -172,7 +168,7 @@ scrape_co_size <- function(url) {
   # Read page URL
   page <- read_html(url)
   job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
-
+  
   for (job_link in job_links) {
     article_url <- paste0("https://www.jobstreet.com.my", job_link)  
     
@@ -210,6 +206,7 @@ scrape_job_type <- function(url) {
   
 }
 
+
 ## Classification (Marcus)
 scrape_class <- function(url) {
   
@@ -221,9 +218,6 @@ scrape_class <- function(url) {
   
   #Removing the brackets
   class <- gsub("[()]", "", class)
-  
-  #Convert to factor
-  class <- as.factor(class)
   
   # Explicitly close the connection
   rm(page)
@@ -266,6 +260,7 @@ scrape_ratings <- function(url) {
   return(extracted_ratings)
   
 }
+
 
 
 ## education level (Cheryl)
@@ -327,8 +322,8 @@ job_title <- NULL
 location <- NULL
 date <- NULL
 company_name <- NULL
-APT <- NULL
-EXP_lvl <- NULL
+class <- NULL
+rating <- NULL
 company_size <- NULL
 job_type <- NULL
 
@@ -342,16 +337,16 @@ for (page_number in 1) {
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
   job_title <- c(job_title, scrape_title(page_url))
   location <- c(location, scrape_location(page_url))
-  APT <- c(APT, scrape_ATP_levels(page_url))
-  EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
+  class <- c(class, scrape_class(page_url))
+  rating <- c(rating, scrape_ratings(page_url))
   date <- c(date, scrape_date(page_url))
   company_name <- c(company_name, scrape_co_name(page_url))
   job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-print(head(all_salaries))
-print(head(all_education_levels))
+print(head(job_title))
+print(head(location))
 
 length_of_data <- length(all_salaries)
 
@@ -541,3 +536,6 @@ for (job_type in unique_job_types) {
 ## Salary vs Experience level (Marcus)
 
 ## Job distribution by location (Gladys)
+
+
+
