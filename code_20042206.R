@@ -118,7 +118,7 @@ scrape_salary <- function(url) {
   page <- read_html(url)
   
   # Select all job elements
-  job_elements <- html_nodes(page, ".rqoqz0")
+  job_elements <- html_nodes(page, ".uo6mkb")
   
   # Initialize vectors to store job titles and extracted salaries
   extracted_salary <- NULL
@@ -127,22 +127,21 @@ scrape_salary <- function(url) {
   for (i in 1:length(job_elements)) {
     
     # Check if salary information is present
-    if (length(html_text(html_nodes(job_elements[i], '.y44q7ih+ .y44q7ih'))) == 0){
+    if (length(html_text(html_nodes(job_elements[i], '._16v7pfz3'))) == 0){
       
       extracted_salary[i] <- "NA"
       
     } else {
       
-      extracted_salary[i] <- html_text(html_nodes(job_elements[i],'.y44q7ih+ .y44q7ih'))
+      # Extract the full salary text
+      salary_text <- html_text(html_nodes(job_elements[i], '._16v7pfz3'))
       
       # Extract numeric values from the salary text
-      lower_bound <- as.numeric(gsub("[^0-9.]+", "", strsplit(extracted_salary[i], " - ")[[1]][1]))
-      upper_bound <- as.numeric(gsub("[^0-9]+", "", strsplit(extracted_salary[i], " - ")[[1]][2]))
+      salary_bounds <- strsplit(salary_text, " – | - ")
       
-      # Convert the lower bound to a consistent format
-      if (grepl("K", extracted_salary[i])) {
-        lower_bound <- lower_bound * 1000
-      }
+      # Convert the lower and upper bounds to numeric values
+      lower_bound <- as.numeric(gsub("[^0-9]+", "", salary_bounds[[1]][1]))
+      upper_bound <- as.numeric(gsub("[^0-9]+", "", salary_bounds[[1]][2]))
       
       # Extract the currency
       currency <- gsub("[0-9,]+", "", extracted_salary[i])
@@ -152,9 +151,7 @@ scrape_salary <- function(url) {
         average_salary <- mean(c(lower_bound, upper_bound))
         extracted_salary[i] <- average_salary
       } else {
-        
         extracted_salary[i] <- lower_bound
-        
       }
     }
   }
@@ -270,7 +267,7 @@ scrape_exp_level <- function(url) {
   all_exp_levels <- list()
   
   # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  job_links <- page %>% html_nodes(".uo6mkd a") %>% html_attr("href")
   
   # Loop through each job link
   for (job_link in job_links) {
@@ -314,7 +311,7 @@ scrape_edu_level <- function(url) {
   all_education_levels <- list()
   
   # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
   
   # Loop through each job link
   for (job_link in job_links) {
@@ -328,24 +325,23 @@ scrape_edu_level <- function(url) {
     # Navigate to the article page
     article_page <- read_html(article_url)
     
-    # Check if the element contains the text "Qualification"
-    qualification_check <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(2) .y44q7i3, ._5135gei ._5135gei:nth-child(1) .pmwfa57:nth-child(2) .y44q7i3") %>% html_text()
-
-    if (!grepl("Qualification", qualification_check, ignore.case = TRUE)) {
-      # If "Qualification" is not present, set education level to NA
-      all_education_levels <- c(all_education_levels, list("Not Specified"))
+    # Class containing education information
+    education_elements <- article_page %>% html_nodes("._1pehz540 li, p~ p+ p")
+    
+    # Extract text from education elements
+    extracted_education <- html_text(education_elements)
+    
+    # Keywords to check for in education text
+    edu_keywords <- c("diploma", "advanced/higher/graduate diploma", "degree", "pre-u", "o level", "a level", "master", "phd")
+    
+    # Check for keywords in the education text
+    matched_keywords <- edu_keywords[sapply(edu_keywords, function(keyword) any(grepl(keyword, extracted_education, ignore.case = TRUE)))]
+    
+    # If keywords are found, append to the parent list; otherwise, set education level to "Not Specified"
+    if (length(matched_keywords) > 0) {
+      all_education_levels <- c(all_education_levels, list(matched_keywords))
     } else {
-      # Class containing education information
-      education_element <- article_page %>% html_node(".pmwfa57:nth-child(2) .y44q7i1")
-      
-      # Extract text from the education element
-      extracted_education <- html_text(education_element)
-      
-      # Split the extracted education text into a list of education levels
-      edu_levels <- unlist(strsplit(extracted_education, ", "))
-      
-      # Append the list of education levels to the parent list
-      all_education_levels <- c(all_education_levels, list(edu_levels))
+      all_education_levels <- c(all_education_levels, list("Not Specified"))
     }
     
     # Explicitly close the connection
@@ -373,7 +369,7 @@ url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
-for (page_number in 1:2) {
+for (page_number in 1) {
   page_url <- paste0(url, "?pg=", page_number)
   all_salaries <- c(all_salaries, scrape_salary(page_url))
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
@@ -386,6 +382,9 @@ for (page_number in 1:2) {
   job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
+
+print(head(all_salaries))
+print(head(all_education_levels))
 
 length_of_data <- length(all_salaries)
 
