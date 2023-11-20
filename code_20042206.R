@@ -393,10 +393,11 @@ for (page_number in 1) {
   #rating <- c(rating, scrape_ratings(page_url))
   #date <- c(date, scrape_date(page_url))
   #company_name <- c(company_name, scrape_co_name(page_url))
-  #job_type <- c(job_type, scrape_job_type(page_url))
-  company_size <- c(company_size, scrape_co_size(page_url))
+  job_type <- c(job_type, scrape_job_type(page_url))
+  #company_size <- c(company_size, scrape_co_size(page_url))
 }
 
+print(head(job_type))
 
 length_of_data <- length(all_salaries)
 
