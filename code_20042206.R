@@ -10,13 +10,9 @@ scrape_title <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  job_title <- page %>% html_nodes('.im1gct2 .z1s6m00') %>% html_text()
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("/.*", "", job_title)
-  job_title <- gsub("\\(.*\\)", "", job_title)
-  job_title <- gsub(" -.*", "", job_title)
-  job_title <- gsub(" –.*", "", job_title)
-  job_title <- gsub(" /.*", "", job_title)
+  job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
+  job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
+  
 }
 
 
@@ -25,10 +21,10 @@ scrape_location <- function(url) {
   
   # Read page URL
   page <- read_html(url)
-  location <- page %>% html_nodes('._1hbhsw6ga._1hbhsw6fy') %>% html_node('.y44q7i3 .rqoqz4') %>% html_text()
+  location <- page %>% html_nodes('.a1msqi6q .a1msqi6u ._1wkzzau0 .szurmz4 .a1msqi6m:nth-child(1) .lnocuo7') %>% html_text()
   location <- gsub("/.*", "", location)
   location <- gsub(" -.*", "", location)
-  location <- as.factor(location)
+  
 }
 
 
