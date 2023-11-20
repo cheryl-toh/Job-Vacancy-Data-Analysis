@@ -207,94 +207,60 @@ scrape_job_type <- function(url) {
 }
 
 
-## average processing time (Marcus)
-scrape_ATP_levels <- function(url) {
+## Classification (Marcus)
+scrape_class <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   
-  # Define empty list for all APT levels
-  all_APT_levels <- list()
+  #Scraping the classification section using CSS selector
+  class <- page %>% html_nodes('.a1msqibu:nth-child(5)') %>% html_text()
   
-  # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  #Removing the brackets
+  class <- gsub("[()]", "", class)
   
-  # Loop through each job link
-  for (job_link in job_links) {
-    
-    # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
-    
-    # Add delay to prevent request limit error
-    Sys.sleep(1)
-    
-    # Navigate to the article page
-    article_page <- read_html(article_url)
-    
-    # Replace ".your-class" with the actual class containing APT information
-    APT_element <- article_page %>% html_node("._1hbhsw64y+ ._5135gei .pmwfa57:nth-child(3) .y44q7i1")
-    
-    if (!grepl("days", APT_element)) {
-      extracted_APT <- "NA"
-    }else {
-      # Extract text from the APT element
-      extracted_APT <- html_text(APT_element)
-    }
-    
-    APT_levels <- unlist(extracted_APT)
-    
-    # Append the list of APT levels to the parent list
-    all_APT_levels <- c(all_APT_levels, list(APT_levels))
-    
-    # Explicitly close the connection
-    rm(article_page)
-  }
-  
-  return(all_APT_levels)
+  # Explicitly close the connection
+  rm(page)
+  return(class)
 }
 
-## experience level (Marcus)
-scrape_exp_level <- function(url) {
+## Ratings (Marcus)
+scrape_ratings <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   
-  # Define empty list for all experience levels
-  all_exp_levels <- list()
+  # Select all job elements
+  job_elements <- html_nodes(page, ".uo6mkb")
   
-  # Select all job links
-  job_links <- page %>% html_nodes(".uo6mkd a") %>% html_attr("href")
+  # Initialize vectors to store job titles and extracted ratings
+  extracted_ratings <- NULL
   
-  # Loop through each job link
-  for (job_link in job_links) {
+  # Loop through each job element
+  for (i in 1:length(job_elements)) {
     
-    # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
-    
-    # Add delay to prevent request limit error
-    Sys.sleep(1)
-    
-    # Navigate to the article page
-    article_page <- read_html(article_url)
-    
-    # Replace ".your-class" with the actual class containing experience information
-    exp_element <- article_page %>% html_node("._1hbhsw674~ ._1hbhsw674+ ._1hbhsw674 .pmwfa57:nth-child(3) .y44q7i1")
-    
-    # Extract text from the experience element
-    extracted_exp <- html_text(exp_element)
-    
-    
-    exp_levels <- unlist(extracted_exp)
-    
-    # Append the list of education levels to the parent list
-    all_exp_levels <- c(all_exp_levels, list(exp_levels))
-    
-    # Explicitly close the connection
-    rm(article_page)
+    # Check if ratings are present
+    if (length(html_text(html_nodes(job_elements[i], '._1jcz3123'))) == 0){
+      
+      extracted_ratings[i] <- "NA"
+      
+    } else {
+      
+      # Extract the ratings
+      extracted_ratings <- html_text(html_nodes(job_elements[i], '._1jcz3123'))
+      
+      # Convert to numeric
+      extracted_ratings <- as.numeric(extracted_ratings)
+    }
   }
   
-  return(all_exp_levels)
+  rm(page)
+  
+  # Return the extracted ratings
+  return(extracted_ratings)
+  
 }
+
 
 
 ## education level (Cheryl)
@@ -356,8 +322,8 @@ job_title <- NULL
 location <- NULL
 date <- NULL
 company_name <- NULL
-APT <- NULL
-EXP_lvl <- NULL
+class <- NULL
+rating <- NULL
 company_size <- NULL
 job_type <- NULL
 
@@ -371,16 +337,16 @@ for (page_number in 1) {
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
   job_title <- c(job_title, scrape_title(page_url))
   location <- c(location, scrape_location(page_url))
-  APT <- c(APT, scrape_ATP_levels(page_url))
-  EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
+  class <- c(class, scrape_class(page_url))
+  rating <- c(rating, scrape_ratings(page_url))
   date <- c(date, scrape_date(page_url))
   company_name <- c(company_name, scrape_co_name(page_url))
   job_type <- c(job_type, scrape_job_type(page_url))
   company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-print(head(all_salaries))
-print(head(all_education_levels))
+print(head(job_title))
+print(head(location))
 
 length_of_data <- length(all_salaries)
 
