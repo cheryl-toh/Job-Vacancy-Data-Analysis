@@ -133,13 +133,27 @@ scrape_co_size <- function(url) {
 ## job type (Bryan)
 scrape_job_type <- function(url) {
   
+  job_type <- NULL
+  
   # Read page URL
   page <- read_html(url)
-  job_type <- page %>% html_nodes('._1hbhsw67y~ ._1hbhsw652 ._1hbhsw6h') %>% html_text()
-  # Explicitly close the connection
-  rm(page)
-  return(job_type)
   
+  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  
+  for (job_link in job_links) {
+    
+    article_url <- paste0("https://www.jobstreet.com.my", job_link)  
+    
+    Sys.sleep(1)
+    
+    article_page <- read_html(article_url)
+    
+    job_type <- article_page %>% html_nodes('_1wkzzau0 a1msqi4y a1msqir') %>% html_text()
+    
+    rm(article_page)
+    
+  }
+  return(job_type)
 }
 
 
