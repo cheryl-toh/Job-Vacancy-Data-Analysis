@@ -2,6 +2,7 @@
 library('rvest')
 library(stringr)
 library(ggplot2)
+library(dplyr)
 
 # scrapping data
 
@@ -294,14 +295,14 @@ scrape_ratings <- function(url) {
       extracted_ratings <- html_text(html_nodes(article_page, '._1jcz3123'))
     }
     
-    ratings <- c(extracted_ratings, ratings)
+    ratings <- c(ratings, extracted_ratings)
     
     # Explicitly close the connection
     rm(article_page)
   }
   
   # Return the extracted ratings
-  return(extracted_ratings)
+  return(ratings)
   
 }
 
