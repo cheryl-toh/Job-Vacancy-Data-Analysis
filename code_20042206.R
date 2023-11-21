@@ -2,6 +2,7 @@
 library('rvest')
 library(stringr)
 library(ggplot2)
+library(lubridate)
 
 # scrapping data
 
@@ -38,7 +39,7 @@ scrape_co_name <- function(url) {
   # Read page URL
   page <- read_html(url)
   company_names <- page %>%
-    html_nodes(".y44q7i1 .rqoqz4") %>%
+    html_nodes(".a1msqi6q .lnocuoa :nth-child(2)") %>%
     html_text()
   rm(page)
   return(company_names)
@@ -47,18 +48,38 @@ scrape_co_name <- function(url) {
 ## date posted (Gabriel)
 # Helper function to process date information
 process_date <- function(raw_date) {
-  if (grepl("hour[s]? ago", raw_date)) {
-    # If hours ago, return today's date
-    return(format(Sys.Date(), format = "%Y-%m-%d"))
-  } else if (grepl("Posted on \\d{1,2}-[a-zA-Z]{3}-\\d{2}", raw_date)) {
-    # If the format is "Posted on DD-MMM-YY", extract the date
-    extracted_date <- str_extract(raw_date, "\\d{1,2}-[a-zA-Z]{3}-\\d{2}")
-    date <- as.Date(extracted_date, format = "%d-%b-%y")
-    # Convert the extracted date to a Date object (assuming 20th century)
-    return(format(date, format = "%Y-%m-%d")) 
-  } else {
-    # If the format is not recognized, return the original string
-    return(raw_date)
+  if (grepl("ago", raw_date)) {
+    #Extract numeric value and time unit
+   match <- regexec("(\\d+)\\s*(h|d)\\s*ago", date_str)
+    
+    if (length(match) > 1 && match[[2]][1] > 0) {
+      value <- as.numeric(regmatches(date_str, match)[[1]][1])
+      unit <- regmatches(date_str, match)[[1]][2]
+      
+      if (unit == "h") {
+      # If hours ago, return today's date
+        return(format(Sys.Date(), format = "%Y-%m-%d"))
+      
+      } else if ( unit == "d") 
+      #If days ago, return date from (x) days ago
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
+        }
+      
+  } else if (grepl("Posted on ", raw_date)) {
+    match <- regexec("(\\d+)\\s*(h|d)\\s*ago", date_str)
+    
+    if (length(match) > 1 && match[[2]][1] > 0) {
+      value <- as.numeric(regmatches(date_str, match)[[1]][1])
+      unit <- regmatches(date_str, match)[[1]][2]
+      
+      if (unit == "h") {
+        # If hours ago, return today's date
+        return(format(Sys.Date(), format = "%Y-%m-%d"))
+        
+      } else if ( unit == "d") 
+        #If days ago, return date from (x) days ago
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
+    }
   }
 }
 
@@ -71,7 +92,7 @@ scrape_date <- function(url) {
   all_dates <- list()
   
   # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
   
   # Loop through each job link
   for (job_link in job_links) {
@@ -86,15 +107,15 @@ scrape_date <- function(url) {
     article_page <- read_html(article_url)
     
     # Check for the first class pattern
-    date_element <- article_page %>% html_node("._1hbhsw66i~ ._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
+    date_element <- article_page %>% html_node(".szurmz6 .lnocuo22.lnocuo7")
     
     # If the first class pattern is not found, try the second class pattern
     if (length(date_element) == 0) {
-      date_element <- article_page %>% html_node("._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
+      date_element <- article_page %>% html_node(".lnocuo22.lnocuoa")
     }
     
     extracted_date <- html_text(date_element)
-  
+    
     
     # Process the date information
     processed_date <- process_date(extracted_date)
