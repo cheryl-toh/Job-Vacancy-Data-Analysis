@@ -48,68 +48,58 @@ scrape_co_name <- function(url) {
 
 ## date posted (Gabriel)
 # Helper function to process date information
+## date posted (Gabriel)
+# Helper function to process date information
 process_date <- function(raw_date) {
-  if (grepl("hour[s]? ago", raw_date)) {
+  print(paste("Raw Date:", raw_date))
+  
+  # Extract numeric value and time unit
+  parts <- strsplit(raw_date, "\\s+")
+  value <- as.numeric(sub("\\D+", "", parts[[1]][1]))
+  unit <- substr(parts[[1]][1], nchar(parts[[1]][1]), nchar(parts[[1]][1]))
+  
+  print(paste("Value:", value, "Unit:", unit))
+  
+  if (unit == "h" | unit == "m" | unit == "s") {
     # If hours ago, return today's date
     return(format(Sys.Date(), format = "%Y-%m-%d"))
-  } else if (grepl("Posted on \\d{1,2}-[a-zA-Z]{3}-\\d{2}", raw_date)) {
-    # If the format is "Posted on DD-MMM-YY", extract the date
-    extracted_date <- str_extract(raw_date, "\\d{1,2}-[a-zA-Z]{3}-\\d{2}")
-    date <- as.Date(extracted_date, format = "%d-%b-%y")
-    # Convert the extracted date to a Date object (assuming 20th century)
-    return(format(date, format = "%Y-%m-%d")) 
-  } else {
-    # If the format is not recognized, return the original string
-    return(raw_date)
+  } else if (unit == "d") {
+    # If days ago, return date from (x) days ago
+    return(format(Sys.Date() - lubridate::ddays(value), format = "%Y-%m-%d"))
   }
+  
+  # If no match, return NULL
+  return(NULL)
 }
 
 scrape_date <- function(url) {
   
   # Read page URL
   page <- read_html(url)
+  # Select all job elements
+  job_elements <- html_nodes(page, ".uo6mkb")
   
-  # Define empty list for all education levels
-  all_dates <- list()
+  # Initialize vectors to store job titles and extracted salaries
+  extracted_date <- NULL
   
-  # Select all job links
-  job_links <- page %>% html_nodes("#jobList article h1 a") %>% html_attr("href")
-  
-  # Loop through each job link
-  for (job_link in job_links) {
-    
-    # Construct the full URL for the job article
-    article_url <- paste0("https://www.jobstreet.com.my", job_link)  # Replace with the actual base URL
-    
-    # Add delay to prevent request limit error
-    Sys.sleep(1)
-    
-    # Navigate to the article page
-    article_page <- read_html(article_url)
-    
-    # Check for the first class pattern
-    date_element <- article_page %>% html_node("._1hbhsw66i~ ._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
-    
-    # If the first class pattern is not found, try the second class pattern
-    if (length(date_element) == 0) {
-      date_element <- article_page %>% html_node("._1hbhsw66i+ ._1hbhsw66i .y44q7ii")
-    }
-    
-    extracted_date <- html_text(date_element)
-  
+  # Loop through each job element
+  for (i in 1:length(job_elements)) {
+    # Extract the full salary text
+    salary_text <- html_text(html_nodes(job_elements[i], '.szurmz6 .lnocuo22.lnocuo7'))
+    print(salary_text)
     
     # Process the date information
-    processed_date <- process_date(extracted_date)
+    processed_date <- process_date(salary_text)
     
-    # Append the processed date to the list
-    all_dates <- c(all_dates, processed_date)
+    extracted_date[i] <- processed_date 
     
-    # Explicitly close the connection
-    rm(article_page)
   }
   
+  rm(page)
+  
+  
   # Return the extracted education levels
-  return(all_dates)
+  return(extracted_date)
   
 }
 
@@ -395,26 +385,27 @@ print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
 for (page_number in 1) {
   page_url <- paste0(url, "?pg=", page_number)
-  all_salaries <- c(all_salaries, scrape_salary(page_url))
-  all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  job_title <- c(job_title, scrape_title(page_url))
-  location <- c(location, scrape_location(page_url))
-  class <- c(class, scrape_class(page_url))
-  rating <- c(rating, scrape_ratings(page_url))
-  #date <- c(date, scrape_date(page_url))
+  #all_salaries <- c(all_salaries, scrape_salary(page_url))
+  #all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  #job_title <- c(job_title, scrape_title(page_url))
+  #location <- c(location, scrape_location(page_url))
+  #class <- c(class, scrape_class(page_url))
+  #rating <- c(rating, scrape_ratings(page_url))
+  date <- c(date, scrape_date(page_url))
   #company_name <- c(company_name, scrape_co_name(page_url))
-  job_type <- c(job_type, scrape_job_type(page_url))
-  company_size <- c(company_size, scrape_co_size(page_url))
+  #job_type <- c(job_type, scrape_job_type(page_url))
+  #company_size <- c(company_size, scrape_co_size(page_url))
 }
 
-print(length(all_salaries))
-print(length(all_education_levels))
-print(length(job_title))
-print(length(location))
-print(length(class))
-print(length(rating))
-print(length(company_size))
-print(length(job_type))
+# print(length(all_salaries))
+# print(length(all_education_levels))
+# print(length(job_title))
+# print(length(location))
+# print(length(class))
+# print(length(rating))
+# print(length(company_size))
+# print(length(job_type))
+print(head(date))
 
 length_of_data <- length(all_salaries)
 
