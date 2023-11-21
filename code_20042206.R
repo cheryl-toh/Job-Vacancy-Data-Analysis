@@ -35,14 +35,18 @@ scrape_location <- function(url) {
 
 
 ## company name (Gabriel)
+## company name (Gabriel)
 scrape_co_name <- function(url) {
   
   # Read page URL
   page <- read_html(url)
   company_names <- page %>%
-    html_nodes(".y44q7i1 .rqoqz4") %>%
+    html_nodes("._842p0a1") %>%
     html_text()
+
   rm(page)
+  
+  print("finish scraping company name")
   return(company_names)
 }
 
@@ -51,14 +55,11 @@ scrape_co_name <- function(url) {
 ## date posted (Gabriel)
 # Helper function to process date information
 process_date <- function(raw_date) {
-  print(paste("Raw Date:", raw_date))
   
   # Extract numeric value and time unit
   parts <- strsplit(raw_date, "\\s+")
   value <- as.numeric(sub("\\D+", "", parts[[1]][1]))
   unit <- substr(parts[[1]][1], nchar(parts[[1]][1]), nchar(parts[[1]][1]))
-  
-  print(paste("Value:", value, "Unit:", unit))
   
   if (unit == "h" | unit == "m" | unit == "s") {
     # If hours ago, return today's date
@@ -85,11 +86,10 @@ scrape_date <- function(url) {
   # Loop through each job element
   for (i in 1:length(job_elements)) {
     # Extract the full salary text
-    salary_text <- html_text(html_nodes(job_elements[i], '.szurmz6 .lnocuo22.lnocuo7'))
-    print(salary_text)
+    date_text <- html_text(html_nodes(job_elements[i], '.szurmz6 .lnocuo22.lnocuo7'))
     
     # Process the date information
-    processed_date <- process_date(salary_text)
+    processed_date <- process_date(date_text)
     
     extracted_date[i] <- processed_date 
     
@@ -97,7 +97,7 @@ scrape_date <- function(url) {
   
   rm(page)
   
-  
+  print("finish scraping salary")
   # Return the extracted education levels
   return(extracted_date)
   
@@ -192,16 +192,22 @@ scrape_co_size <- function(url) {
       company_url <- paste0("https://www.jobstreet.com.my", company_title)
       
       # Add delay to prevent request limit error
-      Sys.sleep(1)
+      Sys.sleep(2)
       
       # Navigate to the article page
       company_page <- read_html(company_url)
       
       # Class containing education information
-      size_elements <- company_page %>% html_nodes(".oNh6PGJHylmCFDXjHsXq span")
+      size_elements <- company_page %>% html_nodes("._2q2j1u6v:nth-child(3) ._1athzic1")
+      
+      if(!grepl("employees", size_elements, ignore.case = TRUE)){
+        size_elements <- company_page %>% html_nodes("._2q2j1u6v:nth-child(2) ._1athzic1")
+      }
       
       # Extract text from education elements
       extracted_size <- html_text(size_elements)
+      
+      print(extracted_size)
       
       all_company_size <- c(all_company_size, extracted_size[1])
     }
@@ -246,8 +252,6 @@ scrape_job_type <- function(url) {
     rm(article_page)
   }
   
-  print("finish scraping job types")
-  
   return(job_types)
 }
 
@@ -266,8 +270,6 @@ scrape_class <- function(url) {
   
   # Explicitly close the connection
   rm(page)
-  
-  print("finish scraping class")
   
   return(class)
 }
@@ -297,14 +299,11 @@ scrape_ratings <- function(url) {
       # Extract the ratings
       extracted_ratings <- html_text(html_nodes(job_elements[i], '._1jcz3123'))
       
-      # Convert to numeric
-      extracted_ratings <- as.numeric(extracted_ratings)
+      print(extracted_ratings)
     }
   }
   
   rm(page)
-  
-  print("finish scraping ratings")
   
   # Return the extracted ratings
   return(extracted_ratings)
@@ -344,7 +343,7 @@ scrape_edu_level <- function(url) {
     extracted_education <- html_text(education_elements)
     
     # Keywords to check for in education text
-    edu_keywords <- c("diploma", "advanced/higher/graduate diploma", "degree", "pre-u", "o level", "a level", "master", "phd")
+    edu_keywords <- c("diploma", "advanced/higher/graduate diploma", "degree", "pre-u", "master", "phd")
     
     # Check for keywords in the education text
     matched_keywords <- edu_keywords[sapply(edu_keywords, function(keyword) any(grepl(keyword, extracted_education, ignore.case = TRUE)))]
@@ -359,8 +358,6 @@ scrape_edu_level <- function(url) {
     # Explicitly close the connection
     rm(article_page)
   }
-  
-  print("finish scraping eduaction level")
   
   # Return the extracted education levels
   return(all_education_levels)
@@ -383,29 +380,73 @@ url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
 print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
-for (page_number in 1) {
+for (page_number in 1:2) {
   page_url <- paste0(url, "?pg=", page_number)
-  #all_salaries <- c(all_salaries, scrape_salary(page_url))
-  #all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  #job_title <- c(job_title, scrape_title(page_url))
-  #location <- c(location, scrape_location(page_url))
-  #class <- c(class, scrape_class(page_url))
-  #rating <- c(rating, scrape_ratings(page_url))
+  
+  
+  
+  job_title <- c(job_title, scrape_title(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping job title (1/10)")
+  }
+  
+  location <- c(location, scrape_location(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping location (2/10)")
+  }
+  
+  company_name <- c(company_name, scrape_co_name(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping company name (3/10)")
+  }
+  
+  all_salaries <- c(all_salaries, scrape_salary(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping salary (4/10)")
+  }
+  
+  job_type <- c(job_type, scrape_job_type(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping job type (5/10)")
+  }
+  
   date <- c(date, scrape_date(page_url))
-  #company_name <- c(company_name, scrape_co_name(page_url))
-  #job_type <- c(job_type, scrape_job_type(page_url))
-  #company_size <- c(company_size, scrape_co_size(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping date posted (6/10)")
+  }
+  
+  all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping education level (7/10)")
+  }
+  company_size <- c(company_size, scrape_co_size(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping company size (8/10)")
+  }
+  
+  class <- c(class, scrape_class(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping class (9/10)")
+  }
+  
+  rating <- c(rating, scrape_ratings(page_url))
+  
+  if(page_number == 2){
+    print("finish scrapping rating (10/10)")
+  }
+  
+  
+  
 }
-
-# print(length(all_salaries))
-# print(length(all_education_levels))
-# print(length(job_title))
-# print(length(location))
-# print(length(class))
-# print(length(rating))
-# print(length(company_size))
-# print(length(job_type))
-print(head(date))
 
 length_of_data <- length(all_salaries)
 
@@ -416,10 +457,10 @@ data <- data.frame(
   Company_Name = rep("Not specified", length_of_data),
   Salary = rep("Not specified", length_of_data),
   Job_Type = rep("Not specified", length_of_data),
-  Company_Size = rep("Not specified", length_of_data),
-  Education_Level = rep("Not specified", length_of_data),
-  Classification = rep("Not specified", length_of_data),
   Date_Posted = rep("Not specified", length_of_data),
+  Education_Level = rep("Not specified", length_of_data),
+  Company_Size = rep("Not specified", length_of_data),
+  Classification = rep("Not specified", length_of_data),
   Ratings = rep("Not specified", length_of_data)
 )
 
@@ -479,37 +520,44 @@ company_size_frequency <- ggplot(job_data, aes(x = Company_Size)) +
        y = "Frequency") +
   theme_minimal()
 
-ggsave("company_by_size_frequency.png", company_size_frequency, width = 10, height = 6)
+ggsave("company_size_by_frequency.png", company_size_frequency, width = 10, height = 6)
 
 
-## Experience level by frequency (Bryan)
+## Classification by frequency (Bryan)
 # Read CSV file
 job_data <- read.csv("job_data.csv")
 
-# Plot histogram for experience level frequency
-experience_plot <- ggplot(job_data, aes(x = Experience_Level)) +
+# Plot histogram for classification frequency
+experience_plot <- ggplot(job_data, aes(y = Classification)) +
   geom_bar(fill = "skyblue", color = "black") +
-  labs(title = "Experience Level Frequency",
-       x = "Experience Level",
-       y = "Frequency") +
+  labs(title = "Classification by Frequency",
+       y = "Classification",
+       x = "Frequency") +
   theme_minimal()
 
 # Save the plot as a PNG file
-ggsave("experience_level_histogram.png", experience_plot, width = 8, height = 6)
+ggsave("classification_histogram.png", experience_plot, width = 8, height = 6)
 
 
-
-## Education level by frequency (Bryan)
-library(tidyr)
-
+#Education level by frequency
 # Read CSV file
 job_data <- read.csv("job_data.csv")
 
-# Remove 'c()' from each entry
+# Remove 'c()' from each entry if present
 job_data$Education_Level <- gsub("c\\((.*)\\)", "\\1", job_data$Education_Level)
 
 # Convert each entry to a list of education levels
 job_data$Education_Level <- sapply(strsplit(as.character(job_data$Education_Level), ", "), as.list)
+
+# If the education level is saved with double quotes, remove them
+job_data$Education_Level <- sapply(job_data$Education_Level, function(levels) {
+  levels <- gsub('"', '', levels)
+  if (length(levels) == 1 && levels == "") {
+    return(list("Not Specified"))
+  } else {
+    return(levels)
+  }
+}, simplify = FALSE)
 
 # Create a data frame with each education level as a separate row
 education_data <- data.frame(
