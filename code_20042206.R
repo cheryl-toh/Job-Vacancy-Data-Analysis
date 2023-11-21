@@ -2,6 +2,7 @@
 library('rvest')
 library(stringr)
 library(ggplot2)
+library(lubridate)
 
 # scrapping data
 
@@ -59,9 +60,9 @@ process_date <- function(raw_date) {
       # If hours ago, return today's date
         return(format(Sys.Date(), format = "%Y-%m-%d"))
       
-      } else if ( unit == "h") 
+      } else if ( unit == "d") 
       #If days ago, return date from (x) days ago
-        return(format(Sys.Date() - ddays), format = "%Y-%m-%d")
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
         }
       
   } else if (grepl("Posted on ", raw_date)) {
@@ -75,9 +76,9 @@ process_date <- function(raw_date) {
         # If hours ago, return today's date
         return(format(Sys.Date(), format = "%Y-%m-%d"))
         
-      } else if ( unit == "h") 
+      } else if ( unit == "d") 
         #If days ago, return date from (x) days ago
-        return(format(Sys.Date() - ddays), format = "%Y-%m-%d")
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
     }
   }
 }
