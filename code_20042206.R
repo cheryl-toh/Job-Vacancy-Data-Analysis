@@ -12,10 +12,6 @@ scrape_title <- function(url) {
   page <- read_html(url)
   job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
   job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
-  
-  print("finish scraping job title")
-  
-  return(job_title)
 }
 
 
@@ -27,10 +23,6 @@ scrape_location <- function(url) {
   location <- page %>% html_nodes('.a1msqi6q .a1msqi6u ._1wkzzau0 .szurmz4 .a1msqi6m:nth-child(1) .lnocuo7') %>% html_text()
   location <- gsub("/.*", "", location)
   location <- gsub(" -.*", "", location)
-  
-  print("finish scraping location")
-  
-  return(location)
 }
 
 
@@ -46,7 +38,6 @@ scrape_co_name <- function(url) {
 
   rm(page)
   
-  print("finish scraping company name")
   return(company_names)
 }
 
@@ -97,7 +88,6 @@ scrape_date <- function(url) {
   
   rm(page)
   
-  print("finish scraping salary")
   # Return the extracted education levels
   return(extracted_date)
   
@@ -149,8 +139,6 @@ scrape_salary <- function(url) {
   }
   
   rm(page)
-  
-  print("finish scraping salary")
   
   # Return the extracted salaries
   return(extracted_salary)
@@ -207,15 +195,12 @@ scrape_co_size <- function(url) {
       # Extract text from education elements
       extracted_size <- html_text(size_elements)
       
-      print(extracted_size)
-      
       all_company_size <- c(all_company_size, extracted_size[1])
     }
     
     rm(article_page)
     
   }
-  print("finish scraping company size")
   
   return(all_company_size)
 }
@@ -280,30 +265,40 @@ scrape_ratings <- function(url) {
   # Read page URL
   page <- read_html(url)
   
-  # Select all job elements
-  job_elements <- html_nodes(page, ".uo6mkb")
+  # Define empty list for all education levels
+  ratings <- list()
   
-  # Initialize vectors to store job titles and extracted ratings
-  extracted_ratings <- NULL
+  # Select all job links
+  job_links <- page %>% html_nodes(".uo6mkd") %>% html_attr("href")
   
-  # Loop through each job element
-  for (i in 1:length(job_elements)) {
+  # Loop through each job link
+  for (job_link in job_links) {
+    
+    # Construct the full URL for the job article
+    article_url <- paste0("https://www.jobstreet.com.my", job_link) 
+    
+    # Add delay to prevent request limit error
+    Sys.sleep(1)
+    
+    # Navigate to the article page
+    article_page <- read_html(article_url)
     
     # Check if ratings are present
-    if (length(html_text(html_nodes(job_elements[i], '._1jcz3123'))) == 0){
+    if (length(html_text(html_nodes(article_page, '._1jcz3123'))) == 0){
       
-      extracted_ratings[i] <- "NA"
+      extracted_ratings <- "NA"
       
     } else {
       
       # Extract the ratings
-      extracted_ratings <- html_text(html_nodes(job_elements[i], '._1jcz3123'))
-      
-      print(extracted_ratings)
+      extracted_ratings <- html_text(html_nodes(article_page, '._1jcz3123'))
     }
+    
+    ratings <- c(extracted_ratings, ratings)
+    
+    # Explicitly close the connection
+    rm(article_page)
   }
-  
-  rm(page)
   
   # Return the extracted ratings
   return(extracted_ratings)
@@ -383,57 +378,55 @@ print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 for (page_number in 1:2) {
   page_url <- paste0(url, "?pg=", page_number)
   
-  
-  
   job_title <- c(job_title, scrape_title(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping job title (1/10)")
   }
-  
+
   location <- c(location, scrape_location(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping location (2/10)")
   }
-  
+
   company_name <- c(company_name, scrape_co_name(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping company name (3/10)")
   }
-  
+
   all_salaries <- c(all_salaries, scrape_salary(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping salary (4/10)")
   }
-  
+
   job_type <- c(job_type, scrape_job_type(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping job type (5/10)")
   }
-  
+
   date <- c(date, scrape_date(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping date posted (6/10)")
   }
-  
+
   all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping education level (7/10)")
   }
   company_size <- c(company_size, scrape_co_size(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping company size (8/10)")
   }
-  
+
   class <- c(class, scrape_class(page_url))
-  
+
   if(page_number == 2){
     print("finish scrapping class (9/10)")
   }
