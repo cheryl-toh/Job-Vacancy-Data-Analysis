@@ -60,10 +60,10 @@ process_date <- function(raw_date) {
       # If hours ago, return today's date
         return(format(Sys.Date(), format = "%Y-%m-%d"))
       
-      } else if ( unit == "d") 
+      } else if ( unit == "d") {
       #If days ago, return date from (x) days ago
-        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
-        }
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d"))
+      }
       
   } else if (grepl("Posted on ", raw_date)) {
     match <- regexec("(\\d+)\\s*(h|d)\\s*ago", date_str)
@@ -78,7 +78,8 @@ process_date <- function(raw_date) {
         
       } else if ( unit == "d") 
         #If days ago, return date from (x) days ago
-        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d")
+        return(format(Sys.Date() - ddays(value), format = "%Y-%m-%d"))
+      }
     }
   }
 }
@@ -396,17 +397,20 @@ print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
 
 for (page_number in 1:2) {
   page_url <- paste0(url, "?pg=", page_number)
-  all_salaries <- c(all_salaries, scrape_salary(page_url))
-  all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
-  job_title <- c(job_title, scrape_title(page_url))
-  location <- c(location, scrape_location(page_url))
-  APT <- c(APT, scrape_ATP_levels(page_url))
-  EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
+  #all_salaries <- c(all_salaries, scrape_salary(page_url))
+  #all_education_levels <- c(all_education_levels, scrape_edu_level(page_url))
+  #job_title <- c(job_title, scrape_title(page_url))
+  #location <- c(location, scrape_location(page_url))
+  #APT <- c(APT, scrape_ATP_levels(page_url))
+  #EXP_lvl <- c(EXP_lvl, scrape_exp_level(page_url))
   date <- c(date, scrape_date(page_url))
   company_name <- c(company_name, scrape_co_name(page_url))
-  job_type <- c(job_type, scrape_job_type(page_url))
-  company_size <- c(company_size, scrape_co_size(page_url))
+  #job_type <- c(job_type, scrape_job_type(page_url))
+  #company_size <- c(company_size, scrape_co_size(page_url))
 }
+
+print(head(date))
+print(head(company_name))
 
 length_of_data <- length(all_salaries)
 
