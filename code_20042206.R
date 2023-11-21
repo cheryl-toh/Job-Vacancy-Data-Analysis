@@ -491,6 +491,33 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 
 # Data Analysis
 ## Company Distribution (Gladys)
+company_counts <- table(job_data$Company_Name)
+company_counts_df <- data.frame(Company_Name = names(company_counts), count = as.numeric(company_counts))
+
+# Select the top 5 companies
+top_5 <- head(company_counts_df[order(-company_counts_df$count), ], 5)
+
+# Distribution of the top 5 companies w/ the most job postings
+Company_Distribution_top5 <- ggplot(top_5, aes(x = "", y = count, fill = Company_Name)) +
+  geom_col(color = "black") + scale_fill_brewer() +
+  coord_polar(theta = "y") +
+  theme(legend.text = element_text(size = 10),
+        axis.title = element_blank()) +
+  labs(fill = NULL) +
+  geom_text(aes(label = count), position = position_stack(vjust = 0.5)) + 
+  ggtitle("Top 5 Companies with the Most Job Postings")
+ggsave("Company_Distribution_top5.png", plot = Company_Distribution_top5, width = 11, height = 8)
+
+Company_Distribution_all <- ggplot(company_counts_df, aes(x = "", y = count, fill = Company_Name)) +
+  geom_bar(stat = "identity", width = 1) +
+  coord_polar("y") +
+  theme(legend.position = "bottom",
+        legend.text = element_text(size = 10),
+        axis.title = element_blank()) +
+  labs(fill = NULL) +
+  ggtitle("Distribution of Job Postings Across Companies")
+ggsave("Company_Distribution_all.png", plot = Company_Distribution_all, width = 18, height = 12)
+
 
 
 ## Job distribution by location (Gladys)
