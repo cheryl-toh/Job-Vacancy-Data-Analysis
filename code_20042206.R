@@ -374,7 +374,7 @@ job_type <- NULL
 
 url <- 'https://www.jobstreet.com.my/jobs/in-Malaysia'
 
-print("Scrapping webpages... (Might take up to 5 - 10 minutes)")
+print("Scrapping webpages... (Might take up to 10 - 20 minutes)")
 
 for (page_number in 1:2) {
   page_url <- paste0(url, "?pg=", page_number)
