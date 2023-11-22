@@ -266,7 +266,7 @@ scrape_ratings <- function(url) {
   # Read page URL
   page <- read_html(url)
   
-  # Define empty list for all education levels
+  # Define empty list for all ratings
   ratings <- list()
   
   # Select all job links
@@ -294,7 +294,8 @@ scrape_ratings <- function(url) {
       # Extract the ratings
       extracted_ratings <- html_text(html_nodes(article_page, '._1jcz3123'))
     }
-    
+
+    #Append to parent list
     ratings <- c(ratings, extracted_ratings)
     
     # Explicitly close the connection
