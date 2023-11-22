@@ -739,24 +739,18 @@ unique_job_types <- unique(job_data$Job_Type)
 # Create a list to store individual plots
 boxplot_list <- list()
 
-# Create boxplot for salary for each job type
-for (job_type in unique_job_types) {
-  plot_data <- subset(job_data, Job_Type == job_type)
-  
-  boxplot <- ggplot(plot_data, aes(x = Job_Type, y = Salary)) +
-    geom_boxplot() +
-    labs(title = paste("Boxplot of Salary for", job_type),
-         x = "Job Type",
-         y = "Salary (Monthly)") +
-    theme(axis.text.x = element_text(angle = 45, hjust = 1))
-  
-  boxplot_list[[job_type]] <- boxplot
-}
+# Create a grouped boxplot
+grouped_boxplot <- ggplot(job_data, aes(x = Job_Type, y = Salary)) +
+  geom_boxplot() +
+  labs(title = "Grouped Boxplot of Salary by Job Type",
+       x = "Job Type",
+       y = "Salary (Monthly)") +
+  theme(axis.text.x = element_text(angle = 45, hjust = 1),
+        legend.position = "none")  # Remove legend to avoid redundancy
 
-# Save each plot as a PNG file
-for (job_type in unique_job_types) {
-  ggsave(paste0("salary_by_", gsub(" ", "_", tolower(job_type)), ".png"), boxplot_list[[job_type]], width = 8, height = 6, units = "in", dpi = 300)
-}
+# Save the grouped boxplot as a PNG file
+ggsave("grouped_salary_boxplot.png", grouped_boxplot, width = 12, height = 8, units = "in", dpi = 300)
+
 
 ## Ratings by Frequency (Marcus)
 # Read the CSV file
