@@ -758,5 +758,23 @@ for (job_type in unique_job_types) {
   ggsave(paste0("salary_by_", gsub(" ", "_", tolower(job_type)), ".png"), boxplot_list[[job_type]], width = 8, height = 6, units = "in", dpi = 300)
 }
 
-## Salary vs Experience level (Marcus)
+## Ratings by Frequency (Marcus)
+# Read the CSV file
+job_data <- read.csv("job_data.csv")
 
+# 1. Handle Missing Values
+job_data <- job_data[complete.cases(job_data$Ratings), ]
+
+# 2. Handle Infinite Values
+job_data <- job_data[is.finite(job_data$Ratings), ]
+
+# 3. Check Data Type
+job_data$Ratings <- as.numeric(job_data$Ratings)
+
+# Plot histogram for Ratings by frequency
+ratings_plot <- ggplot(job_data, aes(x = Ratings)) +
+  geom_bar(fill = "yellow", color = "black", position = "identity") +
+  labs(title = "Total Ratings", x = "Ratings 1 to 5", y = "Frequency")
+
+# Save the plot as a PNG file
+ggsave("Ratings_histogram.png", ratings_plot, width = 8, height = 6)   
