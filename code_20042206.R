@@ -11,7 +11,7 @@ scrape_title <- function(url) {
   # Read page URL
   page <- read_html(url)
   job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
-  job_title <- gsub("/.*|\\(.*\\)| -.*| –.*| /.*", "", job_title)
+  job_title <- gsub("\\*([^*]+)\\*|[<*>]+([^<>*]+)[<*>]+", "", job_title)
 }
 
 
@@ -31,14 +31,31 @@ scrape_co_name <- function(url) {
 
   # Read page URL
   page <- read_html(url)
-  company_names <- page %>%
-    html_nodes("._842p0a1") %>%
-    html_text()
+  
+  # Select all job elements
+  job_elements <- html_nodes(page, ".uo6mkb")
+  
+  # Initialize vectors to store job titles and extracted company name
+  extracted_name <- NULL
+  
+  # Loop through each job element
+  for (i in 1:length(job_elements)) {
+    # Extract the full company name text
+    text <- html_text(html_nodes(job_elements[i], '._842p0a1'))
+    
+    if(length(text) == 0){
+      text <- "Private Advertiser"
+    }
+    
+    # Save name
+    extracted_name[i] <- text
+    
+  }
 
   # Explicitly close the connection
   rm(page)
 
-  return(company_names)
+  return(extracted_name)
 }
 
 
@@ -197,12 +214,22 @@ scrape_co_size <- function(url) {
       # Class containing education information
       size_elements <- company_page %>% html_nodes("._2q2j1u6v:nth-child(3) ._1athzic1")
 
-      if(!grepl("employees", size_elements, ignore.case = TRUE)){
+      if(length(size_elements) == 0 || !grepl("employees", size_elements, ignore.case = TRUE)){
         size_elements <- company_page %>% html_nodes("._2q2j1u6v:nth-child(2) ._1athzic1")
       }
+      
+      if(length(size_elements) == 0 || !grepl("employees", size_elements, ignore.case = TRUE)){
+        size_elements <- company_page %>% html_nodes("._2q2j1u6v:nth-child(1) ._1athzic1")
+      }
+      
+      if(length(size_elements) == 0 || !grepl("employees", size_elements, ignore.case = TRUE)){
+        size_elements <- company_page %>% html_nodes("._2q2j1u6v+ ._2q2j1u6v ._1athzic1")
+      }
+      
 
       # Extract text from education elements
       extracted_size <- html_text(size_elements)
+      print(extracted_size)
 
       all_company_size <- c(all_company_size, extracted_size[1])
     }
@@ -394,7 +421,7 @@ print("Scrapping webpages... (Might take up to 10 - 20 minutes)")
 for (page_number in 1:2) {
 
   # Form page URL
-  page_url <- paste0(url, "?pg=", page_number)
+  page_url <- paste0(url, "?page=", page_number)
 
   # Scrape job title
   job_title <- c(job_title, scrape_title(page_url))
@@ -452,7 +479,7 @@ for (page_number in 1:2) {
     print("finish scrapping company size (8/10)")
   }
 
-  # Scrape classificaiton
+  # Scrape classification
   class <- c(class, scrape_class(page_url))
 
   if(page_number == 2){
@@ -467,6 +494,8 @@ for (page_number in 1:2) {
   }
 
 }
+
+print(length(company_name))
 
 length_of_data <- length(all_salaries)
 
@@ -597,7 +626,7 @@ write.csv(data, "job_data.csv", row.names = FALSE)
 # Job_Distribution_total <- ggplot(JD_count_df, aes(x = reorder(States, -Count), y = Count, fill = Count)) +
 #   geom_bar(stat = "identity", width = 0.75) +
 #   ylim(0, 30) +
-#   labs(title = "Job Distribution by All States", x = "Location", y = "Count") +
+#   labs(title = "Job Distribution by States", x = "Location", y = "Count") +
 #   geom_text(aes(label = paste(as.character(round(100*Count/sum(Count), digits = 1)), "%")), vjust = -0.5) +
 #   theme(axis.title.y = element_text(vjust = 2),
 #         axis.title.x = element_text(vjust = -0.09)) +
