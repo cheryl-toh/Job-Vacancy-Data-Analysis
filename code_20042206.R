@@ -11,7 +11,8 @@ scrape_title <- function(url) {
   # Read page URL
   page <- read_html(url)
   job_title <- page %>% html_nodes('.uo6mkd') %>% html_text()
-  job_title <- gsub("\\*([^*]+)\\*|[<*>]+([^<>*]+)[<*>]+", "", job_title)
+  job_title <- gsub("\\*([^*]+)\\*|<[^<>]+>", "", job_title)
+  job_title <- gsub("^/ ", "", job_title)
 }
 
 
@@ -40,6 +41,7 @@ scrape_co_name <- function(url) {
   
   # Loop through each job element
   for (i in 1:length(job_elements)) {
+    
     # Extract the full company name text
     text <- html_text(html_nodes(job_elements[i], '._842p0a1'))
     
@@ -495,7 +497,7 @@ for (page_number in 1:2) {
 
 }
 
-print(length(company_name))
+print(job_title)
 
 length_of_data <- length(all_salaries)
 

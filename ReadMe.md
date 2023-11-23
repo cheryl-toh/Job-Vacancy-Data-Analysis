@@ -3,7 +3,7 @@
 ## Overview
 This project involves web scraping job data from [JobStreet](https://www.jobstreet.com.my/jobs/in-Malaysia) using R programming. The primary goals were to extract information on job titles, locations, company details, salaries, and more. The extracted data was then analyzed and visualized to gain insights into the job market.
 
-**From line 512 onwards of the code_20042206.R is the implementation of plotting of graphs. Uncomment from line 512 to run the code.**
+**From line 542 onwards of the code_20042206.R is the implementation of plotting of graphs. Uncomment from line 542 to run the code.**
 
 ## Web Scraping Functions
 Several functions have been implemented to scrape specific information:
@@ -19,7 +19,7 @@ Several functions have been implemented to scrape specific information:
 - scrape_ratings: Extracts ratings.
 - scrape_edu_level: Scrapes education levels.
 
-## Data Analysis (Uncomment from Line 512 for Graphs)
+## Data Analysis (Uncomment from Line 542 for Graphs)
 The subsequent section involves data analysis and visualization using ggplot2. Graphs include:
 
 - Company Distribution
